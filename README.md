@@ -7,9 +7,9 @@ Copper bars, chrome logos, sine scrollers, glenz vectors, plasma, tunnels, a ZX 
 platform room and a snowy Swedish village: every part reacts to the bass, the beat and the
 treble of whatever is playing. Cast it to the TV and put on a playlist.
 
-![Twelve of the 64 effects](docs/effects.png)
+![Twelve of the 73 effects](docs/effects.png)
 
-- **64 effects, 100 demos.** Demo 1 is the original UFO demo; demos 2–100 are generated from the
+- **73 effects, 100 demos.** Demo 1 is the original UFO demo; demos 2–100 are generated from the
   effect library, each with its own title, (made-up) group, palettes, parts, transitions and
   scroll text.
 - **Real-time and retro.** Rust renders every pixel into a 384×216 framebuffer, reduced to
@@ -250,6 +250,7 @@ the effect looks different in different demos. See the top of `demo/src/fx/mod.r
 | `demo/src/fx/deform.rs` | rotozoom, flower and square tunnels, swirl, planes, mode 7, voxel landscape, bump mapping, lens, outrun, planet, flag, Droste |
 | `demo/src/fx/vector.rs` | starfield, dot morph, torus, wireframes, rubber cube, cube field, dot tunnel, bob trails, ray tracer, EQ city, fountain, Lissajous, gems |
 | `demo/src/fx/oldskool.rs` | raster bars, shadebobs, sine dots, parallax, checker wave, radial EQ, analyser, text zoom, dot logo, vertical bars, crawl, night city, snowfall |
+| `demo/src/fx/zxgames.rs` | original ZX Spectrum-style game scenes: isometric room, ladders, maze raid, space shooter, tape loader, text adventure, road racer, war map, panorama |
 | `demo/src/fx/image.rs` | the artist picture: dithered portrait, flag, tunnel, rotozoom, halftone |
 | `demo/src/demo.rs` | the demo player: parts, title card, logo, scroller, now playing, transitions, HUD |
 | `demo/src/recipes.rs` | the 100 demos: titles, groups, palettes, parts, scroll texts |

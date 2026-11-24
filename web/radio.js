@@ -31,6 +31,10 @@ const WITH_SONGS = [
   { name: 'Gold', url: 'https://media-ssl.musicradio.com/GoldMP3', tags: ['60s', '70s'] },
 ];
 
+/** What the radio plays until the visitor picks something else. */
+export const DEFAULT_DECADE = '80s90s';
+export const DEFAULT_GENRE = 'trance';
+
 /** Decades to choose from: id -> [label, directory tags (any of them)]. */
 export const DECADES = {
   '80s90s': ['80s & 90s', ['80s', '90s']],
@@ -80,7 +84,7 @@ const mix = (lists) => Array.from({ length: Math.max(0, ...lists.map((l) => l.le
  * Both set: stations tagged with both; if fewer than 3, the genre alone. The 80s/90s
  * backups come last when the choice includes those decades.
  */
-export async function stations(decade = '80s90s', genre = 'any') {
+export async function stations(decade = DEFAULT_DECADE, genre = DEFAULT_GENRE) {
   const dTags = (DECADES[decade] || DECADES['80s90s'])[1];
   const gTags = (GENRES[genre] || GENRES.any)[1];
   let found = [];
@@ -157,8 +161,8 @@ export class Radio {
     this.onStation = onStation;
     this.list = [];
     this.i = -1;
-    this.decade = '80s90s';
-    this.genre = 'any';
+    this.decade = DEFAULT_DECADE;
+    this.genre = DEFAULT_GENRE;
     /** Set by the page: called with (artist, title) when the station's song changes. */
     this.onSong = null;
     this.songTimer = null;

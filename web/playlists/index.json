@@ -4,118 +4,118 @@
     "group": "decade",
     "title": "70s",
     "file": "70s.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/0iA69ik8BbIcrnU4mdAWJ6"
   },
   {
     "id": "80s",
     "group": "decade",
     "title": "80s",
     "file": "80s.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/3PXg55Eh4T2PU4hImBLcwy"
   },
   {
     "id": "90s",
     "group": "decade",
     "title": "90s",
     "file": "90s.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/3KYFJ2u9WxemoPup8dQay4"
   },
   {
     "id": "00s",
     "group": "decade",
     "title": "00s",
     "file": "00s.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/22UxbTv3d8ZSL3KJFYr1aE"
   },
   {
     "id": "synthpop",
     "group": "genre",
     "title": "Synthpop & new wave",
     "file": "synthpop.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/6mQFZRkGmOLAycUHwq4C2e"
   },
   {
     "id": "italo",
     "group": "genre",
     "title": "Italo disco",
     "file": "italo.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/1iAQCBmRsoklOwjutcB9pe"
   },
   {
     "id": "eurodance",
     "group": "genre",
     "title": "Eurodance",
     "file": "eurodance.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/3whmBwusvpuFd0EnCxE2Fw"
   },
   {
     "id": "disco",
     "group": "genre",
     "title": "Disco",
     "file": "disco.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/5TxzVok3rJpKLVYTsqm9Wl"
   },
   {
     "id": "synthwave",
     "group": "genre",
     "title": "Synthwave",
     "file": "synthwave.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/5NCd8NMeE6dJFh1NCbSuJg"
   },
   {
     "id": "trance",
     "group": "genre",
     "title": "Trance",
     "file": "trance.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/1UaXfXRy05JWx0bR83mW6c"
   },
   {
     "id": "house",
     "group": "genre",
     "title": "House",
     "file": "house.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/6nlLZiwFzzGarpxyuHn79V"
   },
   {
     "id": "rock",
     "group": "genre",
     "title": "Classic rock",
     "file": "rock.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/3y28mL478gENh6dkCEnr4t"
   },
   {
     "id": "hiphop",
     "group": "genre",
     "title": "Hip hop",
     "file": "hiphop.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/0IsQrJeKpPQgmwSJGomRso"
   },
   {
     "id": "chiptune",
     "group": "genre",
     "title": "Chiptune & demoscene",
     "file": "chiptune.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/62cEABBtKiikJ5I1fbXqp2"
   },
   {
     "id": "kite",
     "group": "artist",
     "title": "Kite",
     "file": "kite.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/6i0lRKWJdwi0V4Ae88SLpU"
   },
   {
     "id": "computer-80s-90s",
     "group": "computer",
     "title": "Computer music, 80s–90s",
     "file": "computer-80s-90s.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/35wlwSbdGPvHKlcpQM0BkN"
   },
   {
     "id": "computer-00s",
     "group": "computer",
     "title": "Computer music, 00s–",
     "file": "computer-00s.txt",
-    "spotify": ""
+    "spotify": "https://open.spotify.com/playlist/6Fhx8bEPYzTMqOCeqpXhwg"
   }
 ]

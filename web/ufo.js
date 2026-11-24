@@ -4,7 +4,7 @@
 
 import * as spotify from './spotify.js';
 import { artistPhotos } from './pictures.js';
-import { Radio, DECADES, GENRES } from './radio.js';
+import { Radio, DECADES, GENRES, DEFAULT_DECADE, DEFAULT_GENRE } from './radio.js';
 import * as lastfm from './lastfm.js';
 import { createGuide, audioKind, setAudioKind, canShare, songs } from './guide.js';
 import { initPlaylists } from './playlists.js';
@@ -67,7 +67,7 @@ const fromHash = parseInt(location.hash.slice(1), 10);
 if (fromHash >= 1 && fromHash <= demos.length) ex.ufo_set_demo(demo, fromHash - 1);
 
 const juke = $('juke');
-juke.value = localStorage.getItem('ufo.juke') || '0';
+juke.value = localStorage.getItem('ufo.juke') || '2'; // shuffle unless the visitor chose otherwise
 ex.ufo_set_jukebox(demo, Number(juke.value));
 juke.onchange = () => {
   localStorage.setItem('ufo.juke', juke.value);
@@ -310,8 +310,8 @@ let radio = null;
 const decadeSel = $('decade');
 const genreSel = $('genre');
 const radioChoice = () => ({
-  decade: DECADES[localStorage.getItem('ufo.radio.decade')] ? localStorage.getItem('ufo.radio.decade') : '80s90s',
-  genre: GENRES[localStorage.getItem('ufo.radio.genre')] ? localStorage.getItem('ufo.radio.genre') : 'any',
+  decade: DECADES[localStorage.getItem('ufo.radio.decade')] ? localStorage.getItem('ufo.radio.decade') : DEFAULT_DECADE,
+  genre: GENRES[localStorage.getItem('ufo.radio.genre')] ? localStorage.getItem('ufo.radio.genre') : DEFAULT_GENRE,
 });
 const radioLabel = ({ decade, genre }) =>
   genre === 'any' ? `${DECADES[decade][0]} radio` : `${DECADES[decade][0]} ${GENRES[genre][0]} radio`;
@@ -344,7 +344,11 @@ async function startRadio() {
     if (!radio) {
       radio = new Radio(ac, (st) => {
         sendTrack(st.name, 'RADIO - SPACE FOR NEXT STATION');
-        if (follow.checked) ex.ufo_next_demo(demo);
+        // a new station brings a new demo: the next one, or a random one with shuffle (J)
+        if (follow.checked) {
+          if (juke.value === '2') ex.ufo_random_demo(demo);
+          else ex.ufo_next_demo(demo);
+        }
         firstSong = true; // the station's first song keeps the demo the station just got
         say(`Radio: ${st.name}. Space = next station, B = previous.`, 6000);
       });
@@ -619,7 +623,7 @@ guide = createGuide({
 });
 startLastfm();
 guide.init();
-refreshPlaylists = initPlaylists({ spotify, say, container: $('playlists') });
+refreshPlaylists = initPlaylists({ spotify, say, container: $('playlists'), onStart: () => start() });
 
 async function playlistFrom(text, fallbackName) {
   if (!spotify.connected()) {

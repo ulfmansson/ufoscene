@@ -4,7 +4,7 @@
 // from (Last.fm for anyone, or Spotify with your own free developer app).
 // The choices live in localStorage; ufo.js reads them when Start is pressed.
 
-import { DECADES, GENRES } from './radio.js';
+import { DECADES, GENRES, DEFAULT_DECADE, DEFAULT_GENRE } from './radio.js';
 
 const LS = {
   get: (k) => {
@@ -90,8 +90,8 @@ export function createGuide(api) {
       `<select id="${id}" data-key="${key}">${Object.entries(table)
         .map(([v, [label]]) => `<option value="${v}"${v === cur(key, table, dflt) ? ' selected' : ''}>${esc(label)}</option>`)
         .join('')}</select>`;
-    return `<span class="picker">Decade ${sel('g-decade', 'radio.decade', DECADES, '80s90s')}
-      Genre ${sel('g-genre', 'radio.genre', GENRES, 'any')}</span>`;
+    return `<span class="picker">Decade ${sel('g-decade', 'radio.decade', DECADES, DEFAULT_DECADE)}
+      Genre ${sel('g-genre', 'radio.genre', GENRES, DEFAULT_GENRE)}</span>`;
   }
 
   const nav = (back = true) =>

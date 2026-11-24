@@ -17,10 +17,12 @@ export async function loadIndex() {
 }
 
 /**
- * Show the picker in `container`.
+ * Show the picker in `container`. `onStart()` is called first when Play is pressed: the
+ * panel pauses everything, so playing must also close it and carry on (and, with tab audio
+ * chosen, ask for the tab while the click still counts).
  * Returns a refresh() to call when the Spotify connection changes.
  */
-export function initPlaylists({ spotify, say, container }) {
+export function initPlaylists({ spotify, say, container, onStart }) {
   if (!container) return () => {};
   let index = [];
 
@@ -67,7 +69,10 @@ export function initPlaylists({ spotify, say, container }) {
       playBtn.textContent = 'Play in Spotify';
       playBtn.disabled = !spotify.connected();
       playBtn.title = spotify.connected() ? 'Plays on your Spotify app (Premium)' : 'Connect Spotify first';
-      playBtn.onclick = () => play(current());
+      playBtn.onclick = () => {
+        onStart?.();
+        play(current());
+      };
       const open = document.createElement('a');
       open.target = '_blank';
       open.rel = 'noopener';
