@@ -139,7 +139,8 @@ export function watch(onTrack, onError, every = 5000) {
     if (stopped) return;
     try {
       const now = await api('/me/player/currently-playing');
-      const item = now?.item;
+      // a song that is only loaded (paused, or a playlist that ended) is not announced yet
+      const item = now?.is_playing ? now.item : null;
       if (item && item.id !== last) {
         last = item.id;
         const artist = item.artists?.[0] || {};
@@ -266,9 +267,73 @@ export async function makePlaylist(name, songs, progress, { public: isPublic = f
   return { id: pl.id, url: pl.external_urls?.spotify, uri: pl.uri, found, missing };
 }
 
-/** Start a playlist on the active Spotify device (needs Premium and an open Spotify app). */
-export async function play(uri) {
-  await api('/me/player/play', { method: 'PUT', body: JSON.stringify({ context_uri: uri }) });
+/** How many songs a playlist has, or 0 if Spotify will not say. */
+async function playlistSize(uri) {
+  const id = uri.split(':').pop();
+  try {
+    const pl = await api(`/playlists/${id}?fields=tracks(total)`);
+    return pl?.tracks?.total || 0;
+  } catch {
+    return 0;
+  }
+}
+
+const sleep = (ms) => new Promise((ok) => setTimeout(ok, ms));
+
+/**
+ * The Spotify device to play on: the active one, else the one used last time, else the
+ * first one Spotify lists. When a playlist has ended, the app or web player often stops
+ * being "active", and a play request without a device then loads the songs but plays
+ * nothing, so it is better to name the device.
+ */
+async function pickDevice() {
+  const devices = ((await api('/me/player/devices').catch(() => null))?.devices || []).filter((d) => !d.is_restricted);
+  const d = devices.find((x) => x.is_active) || devices.find((x) => x.id === store.get('device')) || devices[0];
+  if (d) store.set('device', d.id);
+  return d || null;
+}
+
+/** Is the given device (or any device) playing right now? */
+async function isPlaying(deviceId) {
+  const s = await api('/me/player').catch(() => null);
+  return !!s?.is_playing && (!deviceId || s.device?.id === deviceId);
+}
+
+/**
+ * Start a playlist on the user's Spotify app or web player (needs Premium and an open
+ * Spotify). By default it plays forever: it starts on a random song, shuffles, and starts
+ * over when it reaches the end. Pass `{ shuffle: false }` to play it in order, once.
+ * Throws if Spotify accepted the request but nothing started playing (status 409).
+ */
+export async function play(uri, { shuffle = true } = {}) {
+  const device = await pickDevice();
+  if (!device) {
+    const e = new Error('no Spotify app or web player is open');
+    e.status = 404;
+    throw e;
+  }
+  const on = `device_id=${encodeURIComponent(device.id)}`;
+  const body = { context_uri: uri };
+  const n = shuffle ? await playlistSize(uri) : 0;
+  if (n > 1) body.offset = { position: Math.floor(Math.random() * n) };
+  await api(`/me/player/play?${on}`, { method: 'PUT', body: JSON.stringify(body) });
+  if (shuffle) {
+    // not fatal if a device refuses these
+    await api(`/me/player/shuffle?state=true&${on}`, { method: 'PUT' }).catch(() => {});
+    await api(`/me/player/repeat?state=context&${on}`, { method: 'PUT' }).catch(() => {});
+  }
+  // check that it really plays; a device that went idle may need waking up first
+  await sleep(1500);
+  if (await isPlaying(device.id)) return;
+  await api('/me/player', { method: 'PUT', body: JSON.stringify({ device_ids: [device.id], play: true }) }).catch(() => {});
+  await sleep(1000);
+  await api(`/me/player/play?${on}`, { method: 'PUT' }).catch(() => {});
+  await sleep(1500);
+  if (await isPlaying(device.id)) return;
+  const e = new Error(`the playlist is loaded in ${device.name}, but it did not start`);
+  e.status = 409;
+  e.device = device.name;
+  throw e;
 }
 
 /** Skip to the next (or previous) song on the active Spotify device (needs Premium). */

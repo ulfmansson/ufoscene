@@ -81,7 +81,8 @@ UFO is at its best on a big screen with the music turned up: a house party, a LA
 retro night, a release party, an office party or a bar.
 
 - **Hours without repeats.** 100 demos of a couple of minutes each. With Spotify connected,
-  every new song brings a new demo, so the screen changes when the music does.
+  every new song brings a new demo, so the screen changes when the music does, and a playlist
+  started from the page shuffles forever.
 - **Everybody's songs on the screen.** The artist and song name dance in at every new song,
   and photos of the artist turn up in the effects.
 - **A party playlist in a minute.** Let the guests write their wishes into a text file, one
@@ -185,6 +186,10 @@ redirect URI too.
 genres, Kite, and computer music from the 80s, 90s and later. Once they are published as public
 Spotify playlists, the panel offers them to everyone: **Open in Spotify** works for anyone, and
 **Play in Spotify** works for people who can connect.
+
+A playlist started from the page (**Play in Spotify** or **Play it now**) plays forever: it
+starts on a random song, shuffles, and starts over when it reaches the end. **Open in Spotify**
+leaves shuffle and repeat to the Spotify app.
 
 To publish them (the site owner, once), stop `./run.sh` and run:
 

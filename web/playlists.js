@@ -34,6 +34,7 @@ export function initPlaylists({ spotify, say, container, onStart }) {
       say(`Playing ${entry.title} in Spotify.`, 5000);
     } catch (e) {
       if (e.status === 404) say('Open the Spotify app (or open.spotify.com) and play anything once, then try again.', 9000);
+      else if (e.status === 409) say(`${entry.title} is loaded in ${e.device || 'Spotify'}, but Spotify did not start it. Press play there once.`, 10000);
       else if (e.status === 403) say('Starting playback from here needs Spotify Premium. Use "Open in Spotify" instead.', 9000);
       else say(`Could not start it (${e.message}).`, 8000);
     }
