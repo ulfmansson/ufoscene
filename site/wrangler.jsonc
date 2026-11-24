@@ -1,0 +1,20 @@
+// Cloudflare Workers static assets: the UFO site is dist/ only, no Worker code,
+// so requests are served from Cloudflare's edge and are not billed.
+//
+//   cd site && ./deploy-cloudflare.sh              -> https://ufo.<you>.workers.dev
+//   cd site && ./deploy-cloudflare.sh ufoscene.net  -> also https://ufoscene.net
+//
+// Fallback host: AWS (site/infra, ./deploy.sh) is the primary one.
+// deploy-cloudflare.sh adds the custom-domain route to a generated copy of this file
+// (wrangler.deploy.jsonc), so this file stays the same for every domain.
+{
+  "name": "ufo",
+  "compatibility_date": "2026-11-01",
+  // keep the free https://ufo.<you>.workers.dev address next to a custom domain
+  "workers_dev": true,
+  "assets": {
+    "directory": "./dist/",
+    // unknown paths such as /callback (where Spotify sends the browser back) get index.html, status 200
+    "not_found_handling": "single-page-application"
+  }
+}

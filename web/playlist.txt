@@ -1,0 +1,51 @@
+# name: UFO demo mix
+# One song per line: "Artist - Title", or a Spotify track link.
+# Lines starting with # are comments. Edit freely, or pick your own file in the page.
+
+# Sverige, 80- och 90-tal
+Europe - The Final Countdown
+Roxette - The Look
+Roxette - Joyride
+Ace of Base - All That She Wants
+Ace of Base - The Sign
+Dr. Alban - It's My Life
+Dr. Alban - Sing Hallelujah!
+E-Type - This Is the Way
+E-Type - Set the World on Fire
+Rednex - Cotton Eye Joe
+Army of Lovers - Crucified
+Leila K - Open Sesame
+Stakka Bo - Here We Go
+Pandora - Trust Me
+The Cardigans - Lovefool
+Robyn - Show Me Love
+Eagle-Eye Cherry - Save Tonight
+Neneh Cherry - Buffalo Stance
+ABBA - Gimme! Gimme! Gimme! (A Man After Midnight)
+Basshunter - Boten Anna
+
+# Synth classics
+Kraftwerk - Computer Love
+Jean-Michel Jarre - Oxygène, Pt. 4
+Vangelis - Chariots of Fire
+Harold Faltermeyer - Axel F
+Jan Hammer - Crockett's Theme
+Yello - Oh Yeah
+Depeche Mode - Just Can't Get Enough
+New Order - Blue Monday
+Pet Shop Boys - West End Girls
+a-ha - Take On Me
+Alphaville - Forever Young
+Eurythmics - Sweet Dreams (Are Made of This)
+
+# 90s dance floor
+2 Unlimited - No Limit
+Snap! - Rhythm Is a Dancer
+Haddaway - What Is Love
+Corona - The Rhythm of the Night
+Captain Hollywood Project - More and More
+Faithless - Insomnia
+Darude - Sandstorm
+Daft Punk - Around the World
+The Prodigy - Out of Space
+Avicii - Levels

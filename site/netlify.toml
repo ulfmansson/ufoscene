@@ -1,0 +1,10 @@
+# Netlify alternative (only needed if you pick Netlify over Cloudflare).
+#   cd site && npx netlify-cli deploy --prod --dir dist
+[build]
+  publish = "dist"
+
+# Spotify sends the browser back to /callback: serve the page there.
+[[redirects]]
+  from = "/callback"
+  to = "/index.html"
+  status = 200

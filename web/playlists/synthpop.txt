@@ -1,0 +1,27 @@
+# name: ufoscene.net · Synthpop & new wave
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Depeche Mode - Enjoy the Silence
+Depeche Mode - Personal Jesus
+New Order - Bizarre Love Triangle
+Pet Shop Boys - It's a Sin
+Orchestral Manoeuvres in the Dark - Electricity
+Giorgio Moroder - Together in Electric Dreams
+Yazoo - Only You
+Erasure - Oh L'amour
+Heaven 17 - Temptation
+Gary Numan - Cars
+Tubeway Army - Are 'Friends' Electric?
+A Flock of Seagulls - I Ran (So Far Away)
+Thomas Dolby - She Blinded Me with Science
+Kraftwerk - Computer Love
+Alphaville - Big in Japan
+Camouflage - The Great Commandment
+Covenant - Call the Ships to Port
+Lustans Lakejer - Diamanter
+Freestyle - Vill ha dig
+Kite - Dance Again
+Talk Talk - Such a Shame
+Ultravox - Hymn

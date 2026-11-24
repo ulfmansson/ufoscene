@@ -1,0 +1,22 @@
+# Rust build output
+/target/
+
+# Built from demo/ by run.sh or site/build.sh
+/web/ufo.wasm
+
+# Local snapshots from the snap / fxsnap examples (uncompressed, large)
+/snapshots/
+
+# Website build and tooling
+/site/dist/
+/site/infra/node_modules/
+/site/wrangler.deploy.jsonc
+/site/.wrangler/
+/site/domain-contact.json
+
+# Personal and editor files
+/my-playlist.txt
+/.claude/
+.DS_Store
+*.orig
+*.rej

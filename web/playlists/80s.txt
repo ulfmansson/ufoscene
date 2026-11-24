@@ -1,0 +1,30 @@
+# name: ufoscene.net · 80s
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+a-ha - Take On Me
+Europe - The Final Countdown
+Roxette - The Look
+Depeche Mode - Just Can't Get Enough
+Pet Shop Boys - West End Girls
+New Order - Blue Monday
+Eurythmics - Sweet Dreams (Are Made of This)
+Tears for Fears - Everybody Wants to Rule the World
+Yazoo - Don't Go
+The Human League - Don't You Want Me
+Soft Cell - Tainted Love
+Duran Duran - Rio
+Madonna - Like a Prayer
+Michael Jackson - Billie Jean
+Alphaville - Forever Young
+Kim Wilde - Kids in America
+Erasure - A Little Respect
+Bronski Beat - Smalltown Boy
+Ultravox - Vienna
+Simple Minds - Don't You (Forget About Me)
+Harold Faltermeyer - Axel F
+Jan Hammer - Crockett's Theme
+Paul Hardcastle - 19
+Orchestral Manoeuvres in the Dark - Enola Gay
+Visage - Fade to Grey

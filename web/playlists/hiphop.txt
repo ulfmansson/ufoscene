@@ -1,0 +1,23 @@
+# name: ufoscene.net · Hip hop
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Grandmaster Flash & The Furious Five - The Message
+Afrika Bambaataa & The Soulsonic Force - Planet Rock
+Herbie Hancock - Rockit
+Run-DMC - It's Tricky
+Beastie Boys - Intergalactic
+Eric B. & Rakim - Paid in Full
+Public Enemy - Fight the Power
+De La Soul - Me Myself and I
+A Tribe Called Quest - Can I Kick It?
+Salt-N-Pepa - Push It
+Young MC - Bust a Move
+Neneh Cherry - Buffalo Stance
+The Sugarhill Gang - Rapper's Delight
+LL Cool J - Mama Said Knock You Out
+Coolio - Gangsta's Paradise
+Dr. Dre - Still D.R.E.
+Petter - Mikrofonkåt
+Timbuktu - Alla vill till himmelen men ingen vill dö

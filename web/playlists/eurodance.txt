@@ -1,0 +1,27 @@
+# name: ufoscene.net · Eurodance
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Culture Beat - Mr. Vain
+2 Unlimited - Get Ready for This
+Haddaway - Life
+La Bouche - Be My Lover
+Snap! - The Power
+Captain Hollywood Project - More and More
+Masterboy - Feel the Heat of the Night
+Real McCoy - Another Night
+Corona - Baby Baby
+Ice MC - Think About the Way
+Cappella - U Got 2 Know
+Fun Factory - Close to You
+E-Type - Set the World on Fire
+Dr. Alban - Look Who's Talking
+Pandora - Trust Me
+Leila K - Open Sesame
+Whigfield - Saturday Night
+Alexia - Uh La La La
+Twenty 4 Seven - Is It Love
+DJ BoBo - Somebody Dance with Me
+Scooter - Hyper Hyper
+Playahitty - The Summer Is Magic

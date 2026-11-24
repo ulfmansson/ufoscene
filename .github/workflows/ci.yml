@@ -1,0 +1,23 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Tests (every effect renders, 100 distinct demos, server)
+        run: cargo test --release
+      - name: WebAssembly build
+        run: |
+          cargo build -p ufo-demo --release --target wasm32-unknown-unknown
+          ls -l target/wasm32-unknown-unknown/release/ufo_demo.wasm
+      - name: JavaScript syntax
+        run: |
+          for f in web/*.js; do node --input-type=module --check < "$f"; done

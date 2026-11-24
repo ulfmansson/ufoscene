@@ -1,0 +1,25 @@
+# name: ufoscene.net · Disco
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Donna Summer - Hot Stuff
+Chic - Good Times
+Sister Sledge - We Are Family
+Earth, Wind & Fire - Boogie Wonderland
+ABBA - Gimme! Gimme! Gimme! (A Man After Midnight)
+Bee Gees - Night Fever
+Boney M. - Daddy Cool
+KC and the Sunshine Band - That's the Way (I Like It)
+The Trammps - Disco Inferno
+Cerrone - Love in C Minor
+Patrick Hernandez - Born to Be Alive
+Amanda Lear - Follow Me
+Diana Ross - I'm Coming Out
+Lipps Inc. - Funkytown
+Anita Ward - Ring My Bell
+Village People - In the Navy
+Silver Convention - Fly, Robin, Fly
+Carl Douglas - Kung Fu Fighting
+Kool & The Gang - Celebration
+Giorgio Moroder - From Here to Eternity

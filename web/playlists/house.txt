@@ -1,0 +1,23 @@
+# name: ufoscene.net · House
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Mr. Fingers - Can You Feel It
+Frankie Knuckles - Your Love
+Marshall Jefferson - Move Your Body
+Inner City - Big Fun
+Inner City - Good Life
+Black Box - Ride on Time
+Robin S - Show Me Love
+CeCe Peniston - Finally
+Crystal Waters - Gypsy Woman (She's Homeless)
+Stardust - Music Sounds Better with You
+Daft Punk - Da Funk
+Technotronic - Pump Up the Jam
+The Shapeshifters - Lola's Theme
+Basement Jaxx - Where's Your Head At
+Avicii - Levels
+Swedish House Mafia - One
+Eric Prydz - Opus
+Axwell - Feel the Vibe (Til the Morning Comes)

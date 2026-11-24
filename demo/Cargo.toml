@@ -1,0 +1,11 @@
+[package]
+name = "ufo-demo"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "100 Amiga-style demos rendered into a framebuffer in WebAssembly, driven by live audio"
+
+[lib]
+# cdylib -> ufo.wasm for the browser, rlib -> native tests and the snapshot example
+crate-type = ["cdylib", "rlib"]

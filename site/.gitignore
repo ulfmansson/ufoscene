@@ -1,0 +1,6 @@
+# Your own site settings (API key, Client ID, support link); start from config.example.json
+/config.json
+# Build output and deploy tooling
+/dist/
+/.wrangler/
+/wrangler.deploy.jsonc

@@ -1,0 +1,11 @@
+{
+  "FirstName": "Your",
+  "LastName": "Name",
+  "ContactType": "PERSON",
+  "AddressLine1": "Street 1",
+  "City": "Stockholm",
+  "ZipCode": "111 22",
+  "CountryCode": "SE",
+  "PhoneNumber": "+46.701234567",
+  "Email": "you@example.com"
+}

@@ -1,0 +1,8 @@
+# Settings for the stack "dev" (create it yourself: see site/README.md).
+# The S3 bucket lives in this region; CloudFront and its certificate are global (us-east-1).
+config:
+  aws:region: eu-north-1
+  # Custom domain, once you own it (../register-domain.sh registers one in Route 53):
+  # ufo:domain: ufoscene.net
+  # ufo:route53: "true"
+encryptionsalt: v1:8S43ILeUeuc=:v1:q5SrUrTOpNDhV4/x:0QzKd9B2ftyxtDjO2mUNauc4VCsNrQ==

@@ -1,0 +1,121 @@
+[
+  {
+    "id": "70s",
+    "group": "decade",
+    "title": "70s",
+    "file": "70s.txt",
+    "spotify": ""
+  },
+  {
+    "id": "80s",
+    "group": "decade",
+    "title": "80s",
+    "file": "80s.txt",
+    "spotify": ""
+  },
+  {
+    "id": "90s",
+    "group": "decade",
+    "title": "90s",
+    "file": "90s.txt",
+    "spotify": ""
+  },
+  {
+    "id": "00s",
+    "group": "decade",
+    "title": "00s",
+    "file": "00s.txt",
+    "spotify": ""
+  },
+  {
+    "id": "synthpop",
+    "group": "genre",
+    "title": "Synthpop & new wave",
+    "file": "synthpop.txt",
+    "spotify": ""
+  },
+  {
+    "id": "italo",
+    "group": "genre",
+    "title": "Italo disco",
+    "file": "italo.txt",
+    "spotify": ""
+  },
+  {
+    "id": "eurodance",
+    "group": "genre",
+    "title": "Eurodance",
+    "file": "eurodance.txt",
+    "spotify": ""
+  },
+  {
+    "id": "disco",
+    "group": "genre",
+    "title": "Disco",
+    "file": "disco.txt",
+    "spotify": ""
+  },
+  {
+    "id": "synthwave",
+    "group": "genre",
+    "title": "Synthwave",
+    "file": "synthwave.txt",
+    "spotify": ""
+  },
+  {
+    "id": "trance",
+    "group": "genre",
+    "title": "Trance",
+    "file": "trance.txt",
+    "spotify": ""
+  },
+  {
+    "id": "house",
+    "group": "genre",
+    "title": "House",
+    "file": "house.txt",
+    "spotify": ""
+  },
+  {
+    "id": "rock",
+    "group": "genre",
+    "title": "Classic rock",
+    "file": "rock.txt",
+    "spotify": ""
+  },
+  {
+    "id": "hiphop",
+    "group": "genre",
+    "title": "Hip hop",
+    "file": "hiphop.txt",
+    "spotify": ""
+  },
+  {
+    "id": "chiptune",
+    "group": "genre",
+    "title": "Chiptune & demoscene",
+    "file": "chiptune.txt",
+    "spotify": ""
+  },
+  {
+    "id": "kite",
+    "group": "artist",
+    "title": "Kite",
+    "file": "kite.txt",
+    "spotify": ""
+  },
+  {
+    "id": "computer-80s-90s",
+    "group": "computer",
+    "title": "Computer music, 80s–90s",
+    "file": "computer-80s-90s.txt",
+    "spotify": ""
+  },
+  {
+    "id": "computer-00s",
+    "group": "computer",
+    "title": "Computer music, 00s–",
+    "file": "computer-00s.txt",
+    "spotify": ""
+  }
+]

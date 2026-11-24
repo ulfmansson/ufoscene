@@ -1,0 +1,24 @@
+# name: ufoscene.net · Trance
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Darude - Sandstorm
+ATB - 9 PM (Till I Come)
+Paul van Dyk - For an Angel
+Robert Miles - Children
+Energy 52 - Café del Mar
+Binary Finary - 1998
+Chicane - Offshore
+Tiësto - Adagio for Strings
+Armin van Buuren - Communication
+Alice Deejay - Better Off Alone
+Sash! - Ecuador
+Delerium - Silence
+Gouryella - Gouryella
+Oceanlab - Satellite
+Above & Beyond - Sun & Moon
+Faithless - God Is a DJ
+Push - Universal Nation
+Fragma - Toca's Miracle
+Kai Tracid - Dance for Eternity

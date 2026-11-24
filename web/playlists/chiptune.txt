@@ -1,0 +1,23 @@
+# name: ufoscene.net · Chiptune & demoscene
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Anamanaguchi - Endless Fantasy
+Anamanaguchi - Airbrushed
+Chipzel - Focus
+Chipzel - Spectra
+Crystal Castles - Courtship Dating
+Crystal Castles - Air War
+Slagsmålsklubben - Sponsored by Destiny
+Machinae Supremacy - Need for Steve
+Kubbi - Up in My Jam (All of a Sudden)
+Disasterpeace - Adventure
+Danny Baranowsky - Disco Descent
+Lena Raine - Resurrections
+Jake Kaufman - Strike the Earth!
+Bit Shifter - Information Superhighway
+Dubmood - The Unknown
+Rob Hubbard - Commando
+Martin Galway - Ocean Loader
+Chris Hülsbeck - Turrican II

@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ufoscene.net — a hymn to the Swedish demo scene</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#101848">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+  body.running { cursor: none; }
+  #screen {
+    position: absolute; inset: 0; margin: auto;
+    width: min(100vw, calc(100vh * 16 / 9));
+    height: min(100vh, calc(100vw * 9 / 16));
+  }
+  canvas { width: 100%; height: 100%; display: block; image-rendering: pixelated; }
+  /* CRT: one dark line per source scanline, plus a soft vignette */
+  #crt {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(ellipse at center, transparent 62%, rgba(0,0,0,.55) 100%),
+      linear-gradient(to bottom, transparent 58%, rgba(0,0,0,.32) 58%);
+    background-size: 100% 100%, 100% calc(100% / 216);
+  }
+  body.tv #crt { display: none; }
+  #panel {
+    position: absolute; inset: 0; margin: auto; width: min(780px, 94vw); height: fit-content; max-height: 92vh;
+    overflow: auto; box-sizing: border-box;
+    background: #0055aa; color: #fff; border: 3px solid #fff; box-shadow: 8px 8px 0 #000;
+    font: 15px/1.5 ui-monospace, Menlo, monospace; padding: 16px 20px;
+  }
+  #panel h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: 3px; color: #ff8800; }
+  #panel h2 { margin: 14px 0 4px; font-size: 16px; color: #ff8800; }
+  #panel button, #panel select, #panel input[type=text] {
+    font: inherit; color: #0055aa; background: #fff; border: 0; padding: 4px 12px; cursor: pointer;
+  }
+  #panel input[type=text] { cursor: text; width: 22em; }
+  #panel kbd { color: #ff8800; }
+  #panel code { color: #ffdd88; user-select: all; }
+  #panel .row { margin: 6px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  #panel a { color: #ffdd88; }
+  #demos {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 2px;
+    max-height: 30vh; overflow: auto; background: #003a77; padding: 4px; margin: 6px 0;
+  }
+  #demos div { padding: 2px 6px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #demos div:hover { background: #ff8800; color: #000; }
+  #demos div.on { background: #fff; color: #0055aa; }
+  #demos small { opacity: .65; }
+  #panel [hidden] { display: none !important; }
+  #panel button.primary { background: #ff8800; color: #000; }
+  #panel .note { font-size: 13px; opacity: .85; }
+  /* the sound picker: radio buttons drawn as one segmented row */
+  #panel .seg { border: 2px solid #fff; padding: 2px 10px; cursor: pointer; position: relative; }
+  #panel .seg input { position: absolute; opacity: 0; pointer-events: none; }
+  #panel .seg:has(input:checked) { background: #fff; color: #0055aa; }
+  #panel .seg:has(input:focus-visible) { outline: 2px solid #ff8800; outline-offset: 2px; }
+  #panel .seg:has(input:disabled) { opacity: .5; cursor: default; }
+  #panel #tab-opts { margin: 6px 0; }
+  #panel details { margin: 6px 0; }
+  #panel summary { cursor: pointer; color: #ffdd88; }
+  #result { white-space: pre-wrap; font-size: 13px; max-height: 20vh; overflow: auto; }
+  #toast {
+    position: absolute; left: 50%; bottom: 4vh; transform: translateX(-50%);
+    background: rgba(0,0,0,.75); color: #fff; padding: 8px 14px;
+    font: 14px ui-monospace, Menlo, monospace; transition: opacity 1s; opacity: 0; pointer-events: none;
+  }
+  /* setup guide (guide.js) and the panel's setup row */
+  #setup-status { opacity: .85; font-size: 13px; }
+  #guide {
+    position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center;
+    background: rgba(0, 0, 0, .55); padding: 12px; box-sizing: border-box;
+  }
+  #guide[hidden] { display: none; }
+  #guide .box {
+    width: min(820px, 100%); max-height: 100%; overflow: auto; box-sizing: border-box;
+    background: #0055aa; color: #fff; border: 3px solid #fff; box-shadow: 8px 8px 0 #000;
+    font: 15px/1.5 ui-monospace, Menlo, monospace; padding: 16px 20px;
+  }
+  #guide h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: 3px; color: #ff8800; }
+  #guide h2 { margin: 0 0 8px; font-size: 17px; color: #ff8800; }
+  #guide p { margin: 6px 0; }
+  #guide a { color: #ffdd88; }
+  #guide code { color: #ffdd88; user-select: all; word-break: break-all; }
+  #guide kbd { color: #ff8800; }
+  #guide ol { margin: 6px 0; padding-left: 1.6em; }
+  #guide li { margin: 4px 0; }
+  #guide button, #guide input[type=text] {
+    font: inherit; color: #0055aa; background: #fff; border: 0; padding: 4px 12px; cursor: pointer;
+  }
+  #guide button.primary { background: #ff8800; color: #000; }
+  #guide input[type=text] { cursor: text; width: 16em; max-width: 100%; box-sizing: border-box; }
+  #guide .tagline { margin: -4px 0 8px; color: #ffdd88; font-style: italic; letter-spacing: 1px; }
+  #guide .dots { float: right; letter-spacing: 4px; color: #88aadd; }
+  #guide .dots b { color: #ff8800; }
+  #guide .opt { display: block; border: 2px solid #3377cc; padding: 8px 10px; margin: 6px 0; cursor: pointer; }
+  #guide .opt:has(input:checked) { border-color: #ff8800; background: #004a99; }
+  #guide .opt.off { opacity: .5; cursor: default; }
+  #guide .opt .how { display: none; margin-top: 6px; font-size: 14px; cursor: auto; }
+  #guide .opt:has(input:checked) .how { display: block; }
+  #guide .tag { background: #ff8800; color: #000; padding: 0 6px; font-size: 12px; margin-left: 6px; }
+  #guide .note { font-size: 13px; opacity: .85; }
+  #guide select { font: inherit; font-size: 14px; color: #0055aa; background: #fff; border: 0; padding: 2px 6px; }
+  #guide .picker { white-space: normal; }
+  #guide .ok { color: #9f9; }
+  #guide .bad { color: #ffb0a0; }
+  #guide .nav { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  #guide .nav .spacer { flex: 1; }
+  @media (max-width: 520px) {
+    #guide .box { font-size: 14px; padding: 12px 14px; }
+    #guide input[type=text] { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div id="screen">
+  <canvas id="c" width="384" height="216"></canvas>
+  <div id="crt"></div>
+</div>
+<div id="panel">
+  <h1>UFOSCENE.NET <small>· 100 DEMOS · A HYMN TO THE SWEDISH DEMO SCENE</small></h1>
+  <div>Amiga-style demos that dance to music. This panel pauses everything; Start or <kbd>P</kbd> carries on.</div>
+  <div class="row" id="sound" role="radiogroup" aria-label="Sound">
+    Sound
+    <label class="seg"><input type="radio" name="sound" value="radio"> Radio</label>
+    <label class="seg" id="sound-tab"><input type="radio" name="sound" value="tab"> Your music in a tab</label>
+    <label class="seg" id="sound-other" title="The microphone, BlackHole or an app's sound: chosen in the setup guide"><input type="radio" name="sound" value="other"> <span>Microphone… (G)</span></label>
+  </div>
+  <div class="row" id="radio-opts">
+    <label>Decade <select id="decade"></select></label>
+    <label>Genre <select id="genre"></select></label>
+  </div>
+  <div id="tab-opts">
+    <div class="note">Play music in another Chrome tab, for example <a href="https://open.spotify.com" target="_blank" rel="noopener">open.spotify.com</a> or YouTube. Start asks which tab to listen to: pick it and keep <i>Also share tab audio</i> on.</div>
+    <div id="playlists"></div>
+  </div>
+  <div class="row">
+    <button id="go" class="primary">▶ Start (Space)</button>
+    <span id="setup-status"></span>
+    <button id="guide-open">Setup guide (G)</button>
+  </div>
+  <div id="demos"></div>
+  <details id="more">
+    <summary>More settings</summary>
+    <div class="row">
+      <label>Play the music on <select id="sink"><option value="">this tab, for Cast tab</option><option value="off">nowhere (only listen)</option></select></label>
+      <label>After a demo <select id="juke"><option value="0">play the next</option><option value="1">repeat it</option><option value="2">shuffle</option></select></label>
+    </div>
+    <div class="row">
+      <label><input type="checkbox" id="follow" checked> new demo for every song</label>
+      <label><input type="checkbox" id="pics" checked> show artist pictures</label>
+      <label><input type="checkbox" id="tvmode"> smooth for Cast (steady 30 fps, no scanlines) — <kbd>T</kbd></label>
+    </div>
+    <div class="row">
+      Spotify: <button id="connect">Connect</button><span id="spstate"></span>
+    </div>
+    <div class="row">
+      Make a Spotify playlist from a text file (one "Artist - Title" per line):
+      <input type="file" id="file" accept=".txt,text/plain">
+      <button id="builtin">Use the built-in list</button>
+    </div>
+    <div id="result"></div>
+    <div>Keys: <kbd>←</kbd><kbd>→</kbd> demo · <kbd>Space</kbd> next song or station (<kbd>B</kbd> previous) · <kbd>N</kbd> next part · <kbd>R</kbd> random demo · <kbd>J</kbd> after-demo mode · <kbd>H</kbd> info · <kbd>T</kbd> TV mode · <kbd>F</kbd> fullscreen · <kbd>P</kbd> this panel (pauses) · <kbd>Q</kbd> QR code to share · <kbd>G</kbd> setup guide</div>
+  </details>
+  <div class="row">
+    <button id="share-ufo">Share ufoscene.net</button> <button id="show-qr" title="Q">QR code (Q)</button>
+    <a href="https://github.com/ulfmansson/ufoscene" target="_blank" rel="noopener">Source on GitHub</a>
+    <span>— free and open source, made with love for the demo scene</span>
+  </div>
+</div>
+<div id="toast"></div>
+<script type="module" src="ufo.js"></script>
+</body>
+</html>

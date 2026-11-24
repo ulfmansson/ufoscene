@@ -1,0 +1,29 @@
+# name: ufoscene.net · 90s
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Dr. Alban - It's My Life
+Ace of Base - All That She Wants
+Ace of Base - The Sign
+Roxette - Joyride
+E-Type - This Is the Way
+Haddaway - What Is Love
+2 Unlimited - No Limit
+Culture Beat - Mr. Vain
+Snap! - Rhythm Is a Dancer
+The Prodigy - Firestarter
+Daft Punk - Around the World
+Robyn - Show Me Love
+The Cardigans - Lovefool
+Dr. Alban - Sing Hallelujah!
+Corona - The Rhythm of the Night
+Aqua - Barbie Girl
+Darude - Sandstorm
+Eiffel 65 - Blue (Da Ba Dee)
+Faithless - Insomnia
+Underworld - Born Slippy (Nuxx)
+Robert Miles - Children
+Army of Lovers - Crucified
+Rednex - Cotton Eye Joe
+Vengaboys - Boom, Boom, Boom, Boom!!

@@ -1,0 +1,27 @@
+# name: ufoscene.net · Computer music, 80s–90s
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Kraftwerk - Computer World
+Kraftwerk - Home Computer
+Kraftwerk - Pocket Calculator
+Kraftwerk - Musique Non-Stop
+Yellow Magic Orchestra - Rydeen
+Jean-Michel Jarre - Equinoxe, Pt. 5
+Jan Hammer - Crockett's Theme
+Harold Faltermeyer - Axel F
+Paul Hardcastle - Rainforest
+Laserdance - Power Run
+Koto - Jabdah
+Yello - Oh Yeah
+Art of Noise - Moments in Love
+Vangelis - Chariots of Fire
+Tangerine Dream - Love on a Real Train
+The Prodigy - Out of Space
+Orbital - Chime
+The Future Sound of London - Papua New Guinea
+Aphex Twin - Windowlicker
+Rob Hubbard - Monty on the Run
+Ben Daglish - The Last Ninja
+Jeroen Tel - Cybernoid II

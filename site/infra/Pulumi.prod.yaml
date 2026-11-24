@@ -1,0 +1,6 @@
+encryptionsalt: v1:KuPzCgwHcIc=:v1:Ni5YgswegulKCj0T:rViugjId41INMJ6rGh5QMQC6qp7GLw==
+config:
+  ufo:createZone: "false"
+  ufo:route53: "true"
+  ufo:domain: ufoscene.net
+  ufo:fixNameServers: "true"

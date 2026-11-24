@@ -1,0 +1,28 @@
+# name: ufoscene.net · 70s
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+ABBA - Dancing Queen
+ABBA - Waterloo
+Bee Gees - Stayin' Alive
+Donna Summer - I Feel Love
+Kraftwerk - Autobahn
+Kraftwerk - Trans-Europe Express
+Kraftwerk - The Robots
+Giorgio Moroder - Chase
+Jean-Michel Jarre - Oxygène, Pt. 4
+Boney M. - Rasputin
+Chic - Le Freak
+Gloria Gaynor - I Will Survive
+Space - Magic Fly
+Sylvester - You Make Me Feel (Mighty Real)
+Village People - Y.M.C.A.
+Queen - Bohemian Rhapsody
+David Bowie - Heroes
+Blondie - Heart of Glass
+Electric Light Orchestra - Mr. Blue Sky
+Earth, Wind & Fire - September
+Yellow Magic Orchestra - Computer Game (Theme from the Circus)
+Cerrone - Supernature
+The Buggles - Video Killed the Radio Star

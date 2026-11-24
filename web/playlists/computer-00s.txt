@@ -1,0 +1,26 @@
+# name: ufoscene.net · Computer music, 00s–
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Daft Punk - Technologic
+Daft Punk - Derezzed
+Justice - Genesis
+Crystal Castles - Alice Practice
+deadmau5 - Strobe
+Boards of Canada - Dayvan Cowboy
+Röyksopp - Eple
+The Knife - Silent Shout
+Fever Ray - If I Had a Heart
+Carpenter Brut - Le Perv
+Power Glove - Hunters
+Moderat - A New Error
+Jon Hopkins - Open Eye Signal
+C418 - Sweden
+Lena Raine - First Steps
+Kubbi - Ember
+Trentemøller - Moan
+Grimes - Oblivion
+CHVRCHES - The Mother We Share
+Anamanaguchi - Miku
+Machinae Supremacy - Sidology

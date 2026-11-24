@@ -1,0 +1,25 @@
+# name: ufoscene.net · Classic rock
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Europe - The Final Countdown
+Europe - Rock the Night
+Queen - Don't Stop Me Now
+Bon Jovi - Livin' on a Prayer
+Survivor - Eye of the Tiger
+Toto - Africa
+Journey - Don't Stop Believin'
+Van Halen - Jump
+Def Leppard - Pour Some Sugar on Me
+AC/DC - Thunderstruck
+Guns N' Roses - Sweet Child o' Mine
+Dire Straits - Money for Nothing
+The Cars - Drive
+Roxette - It Must Have Been Love
+Joan Jett & the Blackhearts - I Love Rock 'n' Roll
+Billy Idol - Rebel Yell
+Foreigner - Juke Box Hero
+Heart - Barracuda
+Deep Purple - Smoke on the Water
+Whitesnake - Here I Go Again

@@ -1,0 +1,18 @@
+# name: ufoscene.net · Kite
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Kite - Dance Again
+Kite - Up for Life
+Kite - True Colours
+Kite - Jonny Boy
+Kite - Count the Days
+Kite - Castles in Snow
+Kite - Nocturne
+Kite - I Can't Stand the Night
+Kite - Demons Are Back
+Kite - Panic Music
+Kite - Teenage Bliss
+Kite - Changing
+Kite - Ten Thousand Miles

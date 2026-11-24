@@ -1,0 +1,27 @@
+# name: ufoscene.net · Italo disco
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Gazebo - I Like Chopin
+Ryan Paris - Dolce vita
+Den Harrow - Future Brain
+Baltimora - Tarzan Boy
+Savage - Only You
+Savage - Don't Cry Tonight
+Righeira - Vamos a la playa
+Kano - I'm Ready
+Valerie Dore - The Night
+Fancy - Slice Me Nice
+Koto - Visitors
+Laserdance - Humanoid Invasion
+Hipnosis - Pulstar
+Scotch - Disco Band
+Raf - Self Control
+Spagna - Call Me
+Silent Circle - Touch in the Night
+Radiorama - Desire
+Mike Mareen - Dancing in the Dark
+Sabrina - Boys (Summertime Love)
+Albert One - Turbo Diesel
+Charlie - Spacer Woman

@@ -1,0 +1,27 @@
+# name: ufoscene.net · 00s
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+Daft Punk - One More Time
+Daft Punk - Harder, Better, Faster, Stronger
+Eric Prydz - Call on Me
+Eric Prydz - Pjanoo
+Basshunter - Boten Anna
+Basshunter - Now You're Gone
+Robyn - With Every Heartbeat
+The Knife - Heartbeats
+Kylie Minogue - Can't Get You Out of My Head
+Gorillaz - Feel Good Inc.
+Justice - D.A.N.C.E.
+Röyksopp - Remind Me
+Benny Benassi - Satisfaction
+Slagsmålsklubben - Malmö Beach Night Party
+Lady Gaga - Just Dance
+La Roux - Bulletproof
+Crystal Castles - Crimewave
+Modjo - Lady (Hear Me Tonight)
+Junior Senior - Move Your Feet
+Annie - Heartbeat
+Moby - Porcelain
+The Sounds - Living in America

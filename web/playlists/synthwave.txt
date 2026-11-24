@@ -1,0 +1,23 @@
+# name: ufoscene.net · Synthwave
+# public: yes
+# description: Made for ufoscene.net — 100 Amiga-style demos that dance to your music. A hymn to the Swedish demo scene.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+
+The Midnight - Days of Thunder
+The Midnight - Sunset
+FM-84 - Running in the Night
+Timecop1983 - On the Run
+Kavinsky - Nightcall
+Kavinsky - Roadgame
+College - A Real Hero
+Electric Youth - Runaway
+Gunship - Tech Noir
+Perturbator - Future Club
+Carpenter Brut - Turbo Killer
+Lazerhawk - Overdrive
+Power Glove - Blood Dragon Theme
+Michael Oakley - Rabbit in the Headlights
+Miami Nights 1984 - Ocean Drive
+Com Truise - Brokendate
+M83 - Midnight City
+Mitch Murder - Frantic Aerobics
