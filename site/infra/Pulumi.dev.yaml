@@ -5,4 +5,9 @@ config:
   # Custom domain, once you own it (../register-domain.sh registers one in Route 53):
   # ufo:domain: ufoscene.net
   # ufo:route53: "true"
+
+  ufo:route53: "true"
+  ufo:createZone: "false"
+  ufo:domain: ufoscene.net
+  ufo:fixNameServers: "true"
 encryptionsalt: v1:8S43ILeUeuc=:v1:q5SrUrTOpNDhV4/x:0QzKd9B2ftyxtDjO2mUNauc4VCsNrQ==

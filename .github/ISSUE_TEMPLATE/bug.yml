@@ -1,0 +1,33 @@
+name: Bug report
+description: Something looks broken, stutters or does not work
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead? Screenshots or a short video help.
+    validations:
+      required: true
+  - type: input
+    id: demo
+    attributes:
+      label: Which demo and part?
+      description: Press H to see it, for example "DEMO 37/100 VEKTORVALS, PART 2/5 FLOWER TUNNEL".
+  - type: input
+    id: setup
+    attributes:
+      label: Browser, computer and TV
+      description: For example "Chrome 157 on macOS, casting to a Chromecast" or "Safari on iPhone".
+    validations:
+      required: true
+  - type: dropdown
+    id: music
+    attributes:
+      label: Where did the music come from?
+      options:
+        - Internet radio
+        - A browser tab
+        - BlackHole
+        - Microphone
+        - No music (autopilot)

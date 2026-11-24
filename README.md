@@ -261,6 +261,12 @@ the effect looks different in different demos. See the top of `demo/src/fx/mod.r
 | `web/` | `index.html`, `ufo.js` (glue, audio, keys), `guide.js` (setup guide), `radio.js` (internet radio), `spotify.js`, `lastfm.js`, `pictures.js` (Wikidata/Commons photos), `playlist.txt` |
 | `site/` | building and hosting it as a public website (AWS S3 + CloudFront with Pulumi, or Cloudflare): see [`site/README.md`](site/README.md) |
 
+## Contributing
+
+Ideas are very welcome: new effects, features, songs, radio stations, scroll text lines, bug
+reports and party reports. Please open an [issue](https://github.com/ulfmansson/ufoscene/issues/new/choose).
+Code contributions (pull requests) are not accepted; see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Credits and notes
 
 - All graphics, sprites, scenes, the font, demo names, group names and texts are original. The

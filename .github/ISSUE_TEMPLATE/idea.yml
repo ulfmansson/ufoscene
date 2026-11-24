@@ -1,0 +1,29 @@
+name: Idea or feature request
+description: An effect, a demo, a feature, songs, a radio station or a scroll text line
+labels: ["idea"]
+body:
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of idea?
+      options:
+        - A new effect or 8-bit scene
+        - A feature for the page or the demos
+        - Songs for a playlist
+        - An internet radio station
+        - Scroll text lines
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: Describe it in your own words. For effects, describe the technique; a link to a video of the technique helps. Please don't ask for a copy of a specific existing demo or game.
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why would it be fun?
+      description: Optional. Where would you use it, at a party, on the TV, ...?
