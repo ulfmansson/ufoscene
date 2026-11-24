@@ -186,9 +186,19 @@ genres, Kite, and computer music from the 80s, 90s and later. Once they are publ
 Spotify playlists, the panel offers them to everyone: **Open in Spotify** works for anyone, and
 **Play in Spotify** works for people who can connect.
 
-To publish them (the site owner, once): open the page with `?admin`
-(`http://127.0.0.1:8100/?admin`), connect Spotify and press **Create the ufoscene.net
-playlists**. Then copy the filled-in list it shows into `web/playlists/index.json` and deploy.
+To publish them (the site owner, once), stop `./run.sh` and run:
+
+```bash
+node site/publish-playlists.mjs --client-id <your Spotify Client ID>
+```
+
+It prints a Spotify login link. Log in with the account that should own the playlists. The
+script then makes every list without a link as a public playlist, writes the links into
+`web/playlists/index.json` and lists the songs Spotify could not find. Commit that file and
+deploy. Running it again only makes the lists that still have no link; `--dry-run` shows which
+those are. It uses the same redirect URI as the page (`http://127.0.0.1:8100/callback`), so
+nothing new needs registering; with `--port <n>`, register `http://127.0.0.1:<n>/callback` too.
+The Client ID can also come from `SPOTIFY_CLIENT_ID` or `spotifyClientId` in `site/config.json`.
 
 ## Playlists from a text file
 

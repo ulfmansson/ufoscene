@@ -19,7 +19,7 @@ All commands below start in the repository root.
 | Music reaction from the **microphone** | ✓ any browser (HTTPS) | |
 | Music reaction from **BlackHole** loopback | ✓ if installed (macOS) | |
 | Song names and covers via **Last.fm** | ✓ (the site needs a Last.fm API key) | |
-| The public **ufoscene.net playlists** (decades, genres, Kite, computer music): open in Spotify | ✓ anyone, via their open.spotify.com links | create them: open the page with `?admin`, connect, *Create the ufoscene.net playlists*, save the shown `index.json` as `web/playlists/index.json` |
+| The public **ufoscene.net playlists** (decades, genres, Kite, computer music): open in Spotify | ✓ anyone, via their open.spotify.com links | create them: `node site/publish-playlists.mjs`, which writes the links into `web/playlists/index.json` |
 | The same playlists: *Play in Spotify* from the page | with their own Spotify app (Premium) | ✓ (Premium) |
 | **Spotify** (song names, artist pictures, skip, playlists from a text file) | with their *own* free Spotify developer app; the guide walks them through it | ✓ with the owner's Client ID |
 

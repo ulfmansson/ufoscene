@@ -3,10 +3,8 @@
 // they are published, holds each one's Spotify link.
 //
 // Visitors with Spotify connected pick one and play it on their Spotify app (Premium) or open
-// it in Spotify. The site owner opens the page with ?admin, connects Spotify and presses
-// "Create the ufoscene.net playlists": the lists are made as public playlists in the owner's
-// account, and the page shows index.json with the links filled in, to save as
-// web/playlists/index.json.
+// it in Spotify. The site owner makes them, once, with site/publish-playlists.mjs, which
+// writes the links into index.json; the page itself never creates playlists.
 
 const GROUPS = { decade: 'Decades', genre: 'Genres', artist: 'Artists', computer: 'Computer music' };
 const playlistId = (link) => link?.match(/playlist[/:]([A-Za-z0-9]{22})/)?.[1] || null;
@@ -19,12 +17,11 @@ export async function loadIndex() {
 }
 
 /**
- * Show the picker (and, with ?admin, the creator) in `container`.
+ * Show the picker in `container`.
  * Returns a refresh() to call when the Spotify connection changes.
  */
 export function initPlaylists({ spotify, say, container }) {
   if (!container) return () => {};
-  const admin = new URLSearchParams(location.search).has('admin');
   let index = [];
 
   async function play(entry) {
@@ -94,57 +91,6 @@ export function initPlaylists({ spotify, say, container }) {
         : 'Anyone can open these public playlists in Spotify. To start them from here, connect Spotify in the setup guide (G); that needs Premium.';
       container.append(note);
     }
-    if (admin) container.append(creator());
-  }
-
-  // ---------------------------------------------------------------- owner: create them all
-
-  function creator() {
-    const box = document.createElement('div');
-    box.className = 'row';
-    const btn = document.createElement('button');
-    btn.textContent = 'Create the ufoscene.net playlists';
-    btn.disabled = !spotify.connected();
-    const out = document.createElement('div');
-    out.style.cssText = 'width: 100%; white-space: pre-wrap; font-size: 13px;';
-    out.textContent = spotify.connected()
-      ? `Makes the ${index.filter((p) => !playlistId(p.spotify)).length} lists without a link as public playlists in your Spotify account.`
-      : 'Connect Spotify first (admin).';
-    btn.onclick = async () => {
-      btn.disabled = true;
-      const result = structuredClone(index);
-      const missingLines = [];
-      for (const entry of result) {
-        if (playlistId(entry.spotify)) continue;
-        try {
-          const text = await (await fetch(`playlists/${entry.file}`)).text();
-          const list = spotify.parsePlaylist(text, entry.title);
-          const pl = await spotify.makePlaylist(list.name, list.songs, (i, n) => (out.textContent = `${entry.title}: looking up songs ${i}/${n}`), {
-            public: list.public,
-            description: list.description,
-          });
-          entry.spotify = pl.url || '';
-          if (pl.missing.length) missingLines.push(`${entry.title}: ${pl.missing.join('; ')}`);
-        } catch (e) {
-          missingLines.push(`${entry.title}: NOT CREATED (${e.message})`);
-        }
-      }
-      const json = JSON.stringify(result, null, 2) + '\n';
-      out.textContent =
-        'Done. Save this as web/playlists/index.json (it holds the new links), then deploy.\n' +
-        (missingLines.length ? `\nNot found or failed:\n  ${missingLines.join('\n  ')}\n` : '') ;
-      const area = document.createElement('textarea');
-      area.value = json;
-      area.rows = 12;
-      area.style.cssText = 'width: 100%; font: 12px ui-monospace, Menlo, monospace;';
-      const copy = document.createElement('button');
-      copy.textContent = 'Copy index.json';
-      copy.onclick = () => navigator.clipboard.writeText(json).then(() => say('index.json copied', 2000));
-      out.append(area, copy);
-      btn.disabled = false;
-    };
-    box.append(btn, out);
-    return box;
   }
 
   loadIndex()

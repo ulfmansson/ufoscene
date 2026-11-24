@@ -208,7 +208,8 @@ export function parsePlaylist(text, fallbackName) {
   return { name, songs, public: isPublic, description };
 }
 
-async function findTrack(line) {
+/** `call` is api() here; site/publish-playlists.mjs passes its own for Node. */
+async function findTrack(line, call = api) {
   const id = line.match(/(?:track[/:])([A-Za-z0-9]{22})/)?.[1];
   if (id) return { uri: `spotify:track:${id}`, label: line };
   const parts = line.split(/\s+[-–—]\s+/);
@@ -219,7 +220,7 @@ async function findTrack(line) {
   }
   queries.push(line);
   for (const q of queries) {
-    const j = await api(`/search?${new URLSearchParams({ q, type: 'track', limit: '1' })}`);
+    const j = await call(`/search?${new URLSearchParams({ q, type: 'track', limit: '1' })}`);
     const t = j?.tracks?.items?.[0];
     if (t) return { uri: t.uri, label: `${t.artists.map((a) => a.name).join(', ')} - ${t.name}` };
   }
@@ -230,13 +231,14 @@ async function findTrack(line) {
  * Create a private playlist from `songs` (lines as parsed above).
  * `progress(done, total)` is called as songs are looked up.
  * Returns { id, url, uri, found: [labels], missing: [lines] }.
+ * `call` does the Web API requests: api() in the browser, its own in site/publish-playlists.mjs.
  */
-export async function makePlaylist(name, songs, progress, { public: isPublic = false, description = '' } = {}) {
+export async function makePlaylist(name, songs, progress, { public: isPublic = false, description = '' } = {}, call = api) {
   const found = [];
   const missing = [];
   const uris = [];
   for (let i = 0; i < songs.length; i++) {
-    const hit = await findTrack(songs[i]).catch(() => null);
+    const hit = await findTrack(songs[i], call).catch(() => null);
     if (hit) {
       if (!uris.includes(hit.uri)) uris.push(hit.uri);
       found.push(hit.label);
@@ -247,18 +249,18 @@ export async function makePlaylist(name, songs, progress, { public: isPublic = f
   const body = JSON.stringify({ name, public: isPublic, description: description || 'Made by the UFO demo from a text file' });
   let pl;
   try {
-    pl = await api('/me/playlists', { method: 'POST', body });
+    pl = await call('/me/playlists', { method: 'POST', body });
   } catch (e) {
     // older form of the same endpoint
-    const me = await api('/me');
-    pl = await api(`/users/${encodeURIComponent(me.id)}/playlists`, { method: 'POST', body });
+    const me = await call('/me');
+    pl = await call(`/users/${encodeURIComponent(me.id)}/playlists`, { method: 'POST', body });
   }
   for (let i = 0; i < uris.length; i += 100) {
     const chunk = JSON.stringify({ uris: uris.slice(i, i + 100) });
     try {
-      await api(`/playlists/${pl.id}/items`, { method: 'POST', body: chunk });
+      await call(`/playlists/${pl.id}/items`, { method: 'POST', body: chunk });
     } catch {
-      await api(`/playlists/${pl.id}/tracks`, { method: 'POST', body: chunk });
+      await call(`/playlists/${pl.id}/tracks`, { method: 'POST', body: chunk });
     }
   }
   return { id: pl.id, url: pl.external_urls?.spotify, uri: pl.uri, found, missing };
