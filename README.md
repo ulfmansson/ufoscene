@@ -114,6 +114,11 @@ guide** asks where the music comes from and whether you want song names and arti
 **Just play** starts 80s and 90s radio straight away, with nothing to set up. The guide comes
 back with **G**.
 
+**Step-by-step guides** for every setup (the browser, Mac, Windows, Linux and ChromeOS, phones,
+the TV, a Raspberry Pi party box, running from the source and hosting your own copy) are at
+<https://ufoscene.net/guides.html>, in [`web/guides.html`](web/guides.html), and linked from the
+panel (**P**) and the setup guide.
+
 ## Where the music comes from
 
 | Source | How | Notes |
@@ -279,7 +284,7 @@ the effect looks different in different demos. See the top of `demo/src/fx/mod.r
 | `demo/src/gfx.rs`, `font.rs`, `zx.rs` | framebuffer and primitives, the 5×7 font with ÅÄÖ, the Spectrum room |
 | `demo/src/lib.rs` | the C ABI that `ufo.wasm` exports to the page |
 | `serve/` | std-only static file server on 127.0.0.1 and ::1 |
-| `web/` | `index.html`, `ufo.js` (glue, audio, keys), `guide.js` (setup guide), `radio.js` (internet radio), `eggs.js` (when the easter eggs come; they are drawn in `demo/src/eggs.rs`), `spotify.js`, `lastfm.js`, `pictures.js` (Wikidata/Commons photos), `playlist.txt` |
+| `web/` | `index.html`, `ufo.js` (glue, audio, keys), `guide.js` (setup guide), `guides.html` (step-by-step guides per environment), `radio.js` (internet radio), `eggs.js` (when the easter eggs come; they are drawn in `demo/src/eggs.rs`), `spotify.js`, `lastfm.js`, `pictures.js` (Wikidata/Commons photos), `playlist.txt` |
 | `site/` | building and hosting it as a public website (AWS S3 + CloudFront with Pulumi, or Cloudflare): see [`site/README.md`](site/README.md) |
 
 ## Contributing

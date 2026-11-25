@@ -66,6 +66,20 @@ META="<link rel=\"canonical\" href=\"$SITE_URL\">
 <meta property=\"og:description\" content=\"$TAGLINE\">"
 META="$META" perl -0pi -e 's#(</title>)#$1\n$ENV{META}#' "$DIST/index.html"
 grep -qF '<meta property="og:url"' "$DIST/index.html" || { print -u2 "build.sh: could not add the meta tags"; exit 1; }
+# The step-by-step guides (web/guides.html) are a page of their own: same tags, own address.
+if [[ -f "$DIST/guides.html" ]]; then
+  GUIDES_URL="${SITE_URL%/}/guides.html"
+  GUIDES_TAG='Step by step: run the demos in the browser, on a Mac, Windows, Linux, a phone, the TV or a Raspberry Pi, or host your own copy.'
+  META="<link rel=\"canonical\" href=\"$GUIDES_URL\">
+<meta name=\"description\" content=\"$GUIDES_TAG\">
+<meta property=\"og:type\" content=\"article\">
+<meta property=\"og:url\" content=\"$GUIDES_URL\">
+<meta property=\"og:site_name\" content=\"$SITE_NAME\">
+<meta property=\"og:title\" content=\"Guides · $SITE_NAME\">
+<meta property=\"og:description\" content=\"$GUIDES_TAG\">"
+  META="$META" perl -0pi -e 's#(</title>)#$1\n$ENV{META}#' "$DIST/guides.html"
+  grep -qF '<meta property="og:url"' "$DIST/guides.html" || { print -u2 "build.sh: could not add the meta tags to guides.html"; exit 1; }
+fi
 # Settings for this site: site/config.json (yours, see config.example.json) or the empty example.
 CONFIG="$SITE/config.json"
 [[ -f "$CONFIG" ]] || CONFIG="$SITE/config.example.json"

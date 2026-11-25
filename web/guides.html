@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guides · ufoscene.net — run the demos anywhere</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#101848">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  html { background: #101848; scroll-behavior: smooth; }
+  body {
+    margin: 0; color: #fff; font: 15px/1.55 ui-monospace, Menlo, Consolas, monospace;
+    background: linear-gradient(#101848, #0a1030 60%, #000);
+    min-height: 100vh;
+  }
+  main { width: min(920px, 100% - 24px); margin: 0 auto; padding: 18px 0 40px; }
+  a { color: #ffdd88; }
+  kbd { color: #ff8800; font: inherit; }
+  code { color: #ffdd88; word-break: break-word; }
+  h1 { margin: 0; font-size: 26px; letter-spacing: 4px; color: #ff8800; }
+  h1 small { font-size: 15px; letter-spacing: 1px; color: #fff; }
+  .tagline { margin: 2px 0 14px; color: #ffdd88; font-style: italic; letter-spacing: 1px; }
+  .top { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
+  .back { white-space: nowrap; }
+  .box {
+    background: #0055aa; border: 3px solid #fff; box-shadow: 8px 8px 0 #000;
+    padding: 14px 20px; margin: 18px 0; box-sizing: border-box;
+  }
+  .box > h2:first-child { margin-top: 0; }
+  h2 { margin: 18px 0 6px; font-size: 19px; color: #ff8800; letter-spacing: 1px; }
+  h3 { margin: 14px 0 4px; font-size: 15px; color: #ffdd88; }
+  p { margin: 6px 0; }
+  .meta { font-size: 13px; color: #cfe0ff; margin: -2px 0 8px; }
+  .meta b { color: #fff; }
+  ol.steps { counter-reset: step; list-style: none; padding: 0; margin: 8px 0; }
+  ol.steps > li {
+    counter-increment: step; position: relative; padding: 6px 0 6px 44px; border-top: 1px dashed #3377cc;
+  }
+  ol.steps > li:first-child { border-top: 0; }
+  ol.steps > li::before {
+    content: counter(step); position: absolute; left: 0; top: 6px; width: 30px; text-align: center;
+    background: #ff8800; color: #000; font-weight: bold;
+  }
+  ul { margin: 4px 0; padding-left: 1.3em; }
+  li { margin: 2px 0; }
+  .cmd { display: flex; gap: 8px; align-items: stretch; margin: 6px 0; }
+  .cmd pre {
+    flex: 1; margin: 0; padding: 6px 10px; background: #001a44; color: #ffdd88; overflow-x: auto;
+    border-left: 3px solid #ff8800; white-space: pre; font: inherit; font-size: 14px;
+  }
+  .cmd button, .pick button {
+    font: inherit; font-size: 13px; color: #0055aa; background: #fff; border: 0; padding: 2px 10px; cursor: pointer;
+  }
+  .cmd button.done { background: #ff8800; color: #000; }
+  .tip, .warn { margin: 8px 0; padding: 6px 10px; font-size: 14px; }
+  .tip { background: #004a99; border-left: 3px solid #88ccff; }
+  .warn { background: #5a2a00; border-left: 3px solid #ff8800; }
+  .tip b:first-child, .warn b:first-child { color: #ffdd88; }
+  /* "Pick your setup" cards */
+  .pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 10px 0 4px; }
+  .pick a {
+    display: block; text-decoration: none; color: #fff; border: 2px solid #3377cc; padding: 8px 10px; background: #004a99;
+  }
+  .pick a:hover, .pick a:focus-visible { border-color: #ff8800; outline: none; }
+  .pick a b { color: #ff8800; display: block; }
+  .pick a span { font-size: 13px; opacity: .9; }
+  .pick a.mine { border-color: #ff8800; background: #00428a; }
+  .pick a.mine::after { content: '← looks like yours'; display: block; margin-top: 4px; font-size: 12px; color: #ffdd88; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; margin: 8px 0; }
+  th, td { border: 1px solid #3377cc; padding: 4px 6px; text-align: left; vertical-align: top; }
+  th { color: #ff8800; background: #004a99; }
+  td.y { color: #9f9; }
+  td.n { color: #ffb0a0; }
+  .scroll { overflow-x: auto; }
+  footer { text-align: center; font-size: 13px; opacity: .85; margin-top: 24px; }
+  .totop { float: right; font-size: 13px; }
+  @media (max-width: 560px) {
+    body { font-size: 14px; }
+    .box { padding: 12px 12px; box-shadow: 4px 4px 0 #000; }
+    ol.steps > li { padding-left: 36px; }
+    ol.steps > li::before { width: 26px; }
+    .cmd { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div class="top">
+    <h1>UFOSCENE.NET <small>· GUIDES</small></h1>
+    <a class="back" href="./">← Back to the demos</a>
+  </div>
+  <p class="tagline">Run the demos anywhere, step by step</p>
+
+  <div class="box" id="pick">
+    <h2>Pick your setup</h2>
+    <p>Every guide starts from nothing and ends with demos dancing to music. The quickest is the first one:
+       open the site and press <i>Just play</i>.</p>
+    <nav class="pick" aria-label="Guides">
+      <a href="#browser" data-env="any"><b>In the browser</b><span>Any computer, nothing to install, 1 minute</span></a>
+      <a href="#mac" data-env="mac"><b>Mac</b><span>Your own music: a tab, the Spotify app, BlackHole</span></a>
+      <a href="#windows" data-env="windows"><b>Windows</b><span>A tab, any app's sound, Stereo Mix</span></a>
+      <a href="#linux" data-env="linux"><b>Linux &amp; ChromeOS</b><span>A tab, or the speakers' monitor</span></a>
+      <a href="#phone" data-env="phone"><b>Phone &amp; tablet</b><span>Radio and the microphone</span></a>
+      <a href="#tv" data-env="tv"><b>On the TV</b><span>Cast tab, HDMI, AirPlay, a projector</span></a>
+      <a href="#pi" data-env="pi"><b>Raspberry Pi party box</b><span>A Pi on the TV, your phone as the remote</span></a>
+      <a href="#source" data-env="source"><b>Run from the source</b><span>Build it yourself: macOS, Linux, Windows</span></a>
+      <a href="#host" data-env="host"><b>Host your own site</b><span>Cloudflare, Netlify, GitHub Pages, AWS</span></a>
+    </nav>
+  </div>
+
+  <div class="box" id="where">
+    <h2>What works where</h2>
+    <p>The demos need music to dance to. These are the ways the music can reach them.</p>
+    <div class="scroll">
+    <table>
+      <tr><th>Sound</th><th>Chrome / Edge on a computer</th><th>Safari / Firefox</th><th>Phone &amp; tablet</th><th>Install?</th></tr>
+      <tr><td><b>Internet radio</b></td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td>nothing</td></tr>
+      <tr><td><b>Music in another tab</b></td><td class="y">✓ macOS, Windows, Linux, ChromeOS</td><td class="n">—</td><td class="n">—</td><td>nothing</td></tr>
+      <tr><td><b>An app's sound</b> (Entire screen + system audio)</td><td class="y">✓ Windows; macOS 14.2 or newer</td><td class="n">—</td><td class="n">—</td><td>nothing</td></tr>
+      <tr><td><b>Loopback device</b></td><td class="y">✓ BlackHole (Mac), Stereo Mix (Windows), monitor (Linux)</td><td class="y">✓</td><td class="n">—</td><td>Mac: BlackHole</td></tr>
+      <tr><td><b>Microphone</b></td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td>nothing</td></tr>
+    </table>
+    </div>
+    <p class="note">With no sound at all, the demos run on a 125 BPM autopilot, so the screen never stops.</p>
+  </div>
+
+  <!-- ================================================================== browser -->
+  <section class="box" id="browser">
+    <a class="totop" href="#pick">↑ all guides</a>
+    <h2>In the browser, nothing to install</h2>
+    <p class="meta"><b>Takes:</b> 1 minute · <b>Needs:</b> any computer with a browser (Chrome or Edge is best) and speakers</p>
+    <ol class="steps">
+      <li>Open <a href="https://ufoscene.net/">ufoscene.net</a>. On the first visit a short <b>setup guide</b> opens.</li>
+      <li>Pick a <b>decade</b> and a <b>genre</b> if you like (80s &amp; 90s is the default), then press <b>Just play</b>.
+          Internet radio starts and the first demo comes on.</li>
+      <li>Press <kbd>F</kbd> (or double-click) for fullscreen. <kbd>Space</kbd> changes the station, <kbd>B</kbd> goes back one,
+          <kbd>←</kbd> <kbd>→</kbd> change the demo, <kbd>R</kbd> picks a random one.</li>
+      <li>Press <kbd>P</kbd> to pause everything and open the settings panel; <kbd>P</kbd> again carries on.
+          <kbd>G</kbd> brings the setup guide back.</li>
+    </ol>
+    <div class="tip"><b>Your own music instead?</b> Follow the guide for your computer:
+      <a href="#mac">Mac</a>, <a href="#windows">Windows</a> or <a href="#linux">Linux &amp; ChromeOS</a>.
+      For song names and artist photos, see <a href="#songs">Song names</a> at the end.</div>
+  </section>
+
+  <!-- ================================================================== mac -->
+  <section class="box" id="mac">
+    <a class="totop" href="#pick">↑ all guides</a>
+    <h2>Mac</h2>
+    <p class="meta"><b>Needs:</b> Chrome or Edge (Safari only offers the radio and the microphone)</p>
+
+    <h3>A · Music from a browser tab — no install (easiest)</h3>
+    <ol class="steps">
+      <li>In Chrome, open the music in one tab: <a href="https://open.spotify.com" target="_blank" rel="noopener">open.spotify.com</a>,
+          YouTube or SoundCloud. Start a song.</li>
+      <li>Open <a href="https://ufoscene.net/">ufoscene.net</a> in another tab. In the setup guide (<kbd>G</kbd>) press
+          <b>Set it up</b> and choose <b>Your music in a Chrome tab</b>; or in the panel (<kbd>P</kbd>) set <i>Sound</i> to
+          <b>Your music in a tab</b>.</li>
+      <li>Press <b>Start</b>. Chrome asks what to share: pick the <b>Chrome tab</b> with the music and keep
+          <b>Also share tab audio</b> on. Press <b>Share</b>.</li>
+      <li>The music tab goes quiet and UFO plays the music instead, so everything you hear now comes from the UFO tab.
+          That is what makes <a href="#tv">Cast tab</a> work.</li>
+    </ol>
+
+    <h3>B · The Spotify app or any other app — Entire screen</h3>
+    <ol class="steps">
+      <li>Check that macOS is <b>14.2 or newer</b> (Apple menu → About This Mac) and Chrome is up to date.</li>
+      <li>In the setup guide choose <b>Your music in an app</b>, then press <b>Start</b>.</li>
+      <li>Pick <b>Entire screen</b> and switch on <b>Also share system audio</b>.</li>
+      <li>The first time, macOS asks to allow Chrome under System Settings → Privacy &amp; Security →
+          <b>Screen &amp; System Audio Recording</b>. Allow it, restart Chrome and press Start again.</li>
+    </ol>
+    <div class="warn"><b>Casting?</b> With Entire screen the sound keeps playing on the Mac, so a TV with Cast tab gets the
+      demo but not the music. Use A or C for casting, or connect the TV with HDMI or AirPlay.</div>
+
+    <h3>C · BlackHole loopback — any app, and it casts</h3>
+    <ol class="steps">
+      <li>Install BlackHole once (with <a href="https://brew.sh" target="_blank" rel="noopener">Homebrew</a>, or the installer from
+          <a href="https://existential.audio/blackhole/" target="_blank" rel="noopener">existential.audio</a>):
+        <div class="cmd"><pre>brew install --cask blackhole-2ch</pre><button type="button">Copy</button></div></li>
+      <li>System Settings → <b>Sound</b> → Output → <b>BlackHole 2ch</b>. The Mac goes silent: that is expected.</li>
+      <li>Play music in any app (the Spotify app, Music, a DJ app).</li>
+      <li>In UFO choose <b>BlackHole loopback</b> in the setup guide, press <b>Start</b> and allow the microphone.
+          UFO finds BlackHole by itself and plays the music from its tab.</li>
+      <li>Press <kbd>P</kbd> and pick where you hear it under <b>Play the music on</b>: <i>this tab</i> for Cast tab,
+          or your speakers or an AirPlay/HDMI screen.</li>
+      <li>When you are done, set the Sound output back to your speakers.</li>
+    </ol>
+    <div class="tip"><b>BlackHole missing from the list?</b> Restart the sound system:
+      <div class="cmd"><pre>sudo killall coreaudiod</pre><button type="button">Copy</button></div></div>
+  </section>
+
+  <!-- ================================================================== windows -->
+  <section class="box" id="windows">
+    <a class="totop" href="#pick">↑ all guides</a>
+    <h2>Windows</h2>
+    <p class="meta"><b>Needs:</b> Chrome or Edge</p>
+
+    <h3>A · Music from a browser tab — no install (easiest)</h3>
+    <ol class="steps">
+      <li>Open the music in one tab (<a href="https://open.spotify.com" target="_blank" rel="noopener">open.spotify.com</a>, YouTube, SoundCloud) and start a song.</li>
+      <li>Open <a href="https://ufoscene.net/">ufoscene.net</a> in another tab and choose <b>Your music in a Chrome tab</b>
+          (setup guide, <kbd>G</kbd>) or <b>Your music in a tab</b> (panel, <kbd>P</kbd>).</li>
+      <li>Press <b>Start</b>, pick the music tab, keep <b>Also share tab audio</b> on, press <b>Share</b>.</li>
+      <li>UFO now plays the music from its own tab, ready for <a href="#tv">Cast tab</a>.</li>
+    </ol>
+
+    <h3>B · The Spotify app or any other app — Entire screen</h3>
+    <ol class="steps">
+      <li>In the setup guide choose <b>Your music in an app</b>, then press <b>Start</b>.</li>
+      <li>Pick <b>Entire screen</b> and switch on <b>Also share system audio</b>. Press <b>Share</b>.</li>
+      <li>Play music in any app. The sound keeps playing on the PC's speakers, and the demos dance to it.</li>
+    </ol>
+
+    <h3>C · Stereo Mix — what the speakers play, as a microphone</h3>
+    <ol class="steps">
+      <li>Press <kbd>Win</kbd>+<kbd>R</kbd>, type <code>mmsys.cpl</code>, press Enter, open the <b>Recording</b> tab.</li>
+      <li>Right-click the list → <b>Show Disabled Devices</b>. Right-click <b>Stereo Mix</b> → <b>Enable</b>.
+          (Not there? Your sound driver does not offer it; use A or B.)</li>
+      <li>In UFO press <kbd>G</kbd> → <b>Set it up</b>, choose <b>The microphone</b> and press <b>Start</b>. When Chrome asks, allow it.</li>
+      <li>Tell Chrome to use Stereo Mix: click the icon left of the address → <b>Site settings</b> → Microphone, or open
+          <code>chrome://settings/content/microphone</code> and pick <b>Stereo Mix</b>. Reload UFO and press Start.</li>
+    </ol>
+  </section>
+
+  <!-- ================================================================== linux -->
+  <section class="box" id="linux">
+    <a class="totop" href="#pick">↑ all guides</a>
+    <h2>Linux &amp; ChromeOS</h2>
+    <p class="meta"><b>Needs:</b> Chrome, Chromium or Edge</p>
+
+    <h3>A · Music from a browser tab — no install (Linux and ChromeOS)</h3>
+    <ol class="steps">
+      <li>Open the music in one tab and start a song.</li>
+      <li>Open <a href="https://ufoscene.net/">ufoscene.net</a> in another tab, choose <b>Your music in a Chrome tab</b>
+          (<kbd>G</kbd>) or <b>Your music in a tab</b> (<kbd>P</kbd>).</li>
+      <li>Press <b>Start</b>, pick the music tab, keep <b>Also share tab audio</b> on, press <b>Share</b>.</li>
+    </ol>
+
+    <h3>B · Any app — the speakers' monitor (Linux with PulseAudio or PipeWire)</h3>
+    <ol class="steps">
+      <li>Install the volume control once (Debian, Ubuntu, Raspberry Pi OS; other distributions have the same package):
+        <div class="cmd"><pre>sudo apt install pavucontrol</pre><button type="button">Copy</button></div></li>
+      <li>Play music in any app. In UFO press <kbd>G</kbd> → <b>Set it up</b>, choose <b>The microphone</b>, press <b>Start</b> and allow it.</li>
+      <li>Open <b>pavucontrol</b> → <b>Recording</b> tab. Next to Chrome, change the input to
+          <b>Monitor of …</b> your speakers or headphones.</li>
+      <li>The demos now hear exactly what the speakers play, and the music keeps playing as before.</li>
+    </ol>
+  </section>
+
+  <!-- ================================================================== phone -->
+  <section class="box" id="phone">
+    <a class="totop" href="#pick">↑ all guides</a>
+    <h2>Phone &amp; tablet</h2>
+    <p class="meta"><b>Works with:</b> the radio and the microphone · <b>Best for:</b> trying it out, or as a remote screen at a party</p>
+    <ol class="steps">
+      <li>Open <a href="https://ufoscene.net/">ufoscene.net</a> and turn the phone sideways.</li>
+      <li>Tap <b>Just play</b> for the radio. Or tap <b>Set it up</b>, choose <b>The microphone</b>, tap <b>Next</b> until
+          <b>Start</b> and allow the microphone: the demos listen to the music in the room.</li>
+      <li>Tap the running demo for the settings (they pause everything; <b>Start</b> carries on). Double-tap for
+          fullscreen where the phone allows it.</li>
+    </ol>
+    <div class="tip"><b>At a party:</b> press <kbd>Q</kbd> on the big screen. A QR code to ufoscene.net fills it for ten
+      seconds, so guests can open it on their phones.</div>
+  </section>
+
+  <!-- ================================================================== tv -->
+  <section class="box" id="tv">
+    <a class="totop" href="#pick">↑ all guides</a>
+    <h2>On the TV</h2>
+    <p class="meta"><b>Needs:</b> UFO running on a computer (any guide above), and a TV with Chromecast/Google TV, HDMI or AirPlay</p>
+
+    <h3>A · Cast tab (Chromecast, Google TV, many smart TVs)</h3>
+    <ol class="steps">
+      <li>Start UFO with sound that plays <b>from the UFO tab</b>: the radio, a shared tab, or BlackHole.
+          (Entire screen keeps the sound on the computer, so the TV would get no music.)</li>
+      <li>Chrome menu <b>⋮</b> → <b>Cast, save and share</b> → <b>Cast…</b> → <b>Sources</b> → <b>Cast tab</b>, then pick the TV.</li>
+      <li>Press <kbd>T</kbd> for <b>TV mode</b>: a steady 30 fps without the scanline overlay, which the cast video
+          carries far more smoothly.</li>
+      <li>Press <kbd>F</kbd> for fullscreen and leave the computer alone; the mouse pointer hides by itself.</li>
+    </ol>
+
+    <h3>B · HDMI cable or a projector (smoothest)</h3>
+    <ol class="steps">
+      <li>Connect the computer to the TV or projector with HDMI. Mirror the screen, or drag the UFO window to the TV.</li>
+      <li>Press <kbd>P</kbd> and pick the TV under <b>Play the music on</b>, so the sound comes from the TV.</li>
+      <li>Press <kbd>F</kbd> for fullscreen. <kbd>T</kbd> is not needed here: 60 fps with scanlines looks best.</li>
+    </ol>
+
+    <h3>C · AirPlay screen mirroring (Mac to Apple TV or an AirPlay TV)</h3>
+    <ol class="steps">
+      <li>Control Center → <b>Screen Mirroring</b> → pick the TV.</li>
+      <li>In UFO press <kbd>P</kbd> and pick the AirPlay TV under <b>Play the music on</b>.</li>
+      <li>Press <kbd>F</kbd> for fullscreen.</li>
+    </ol>
+  </section>
+
+  <!-- ================================================================== pi -->
+  <section class="box" id="pi">
+    <a class="totop" href="#pick">↑ all guides</a>
+    <h2>Raspberry Pi party box</h2>
+    <p class="meta"><b>Needs:</b> a Raspberry Pi 4/400 or 5/500 (smooth; a Pi 3 or Zero 2 W may manage), a memory card,
+       an HDMI cable to the TV, and a phone · <b>Takes:</b> 15 minutes</p>
+    <p>The <a href="https://github.com/ulfmansson/ufoscene-pi" target="_blank" rel="noopener">ufoscene-pi</a> image turns a
+       Pi into a ufoscene box: it boots straight into the demos, with no keyboard or mouse, and your phone is the remote.
+       The music comes from the built-in radio, from your phone over AirPlay or Bluetooth, or from a USB microphone.</p>
+    <ol class="steps">
+      <li>Install <a href="https://www.raspberrypi.com/software/" target="_blank" rel="noopener">Raspberry Pi Imager</a>
+          (version 2.0 or newer) on your computer.</li>
+      <li>In Imager, open <b>App Options → Content Repository</b>, choose <b>Use custom URL</b> and paste:
+        <div class="cmd"><pre>https://github.com/ulfmansson/ufoscene-pi/releases/latest/download/os_list.json</pre><button type="button">Copy</button></div></li>
+      <li>Pick your Pi model, then <b>ufoscene</b> as the operating system, then your memory card.</li>
+      <li>In the customisation step set the hostname <code>ufoscene</code>, a username and password, and your
+          <b>Wi-Fi</b> (not needed with a network cable). Write the card.</li>
+      <li>Put the card in the Pi, connect it to the TV with HDMI and switch it on. The first boot takes a few minutes;
+          then the demos start, with a QR code on the TV.</li>
+      <li>Scan the QR code with your phone, or open <a href="http://ufoscene.local/">http://ufoscene.local/</a> on a phone
+          on the same Wi-Fi. That is the remote: demos, radio stations, where the music comes from, TV mode, settings.</li>
+      <li>Your own music: on an iPhone, iPad or Mac, <b>AirPlay</b> to <b>UFOSCENE</b>. On Android, press
+          <b>Pair Bluetooth</b> on the remote and pick <b>UFOSCENE</b> in the phone's Bluetooth settings. The music plays
+          through the TV, and every new song starts a new demo with the artist and title.</li>
+    </ol>
+    <div class="tip"><b>Already have Raspberry Pi OS Lite on a Pi?</b> Install it on top instead (run it again to update):
+      <div class="cmd"><pre>curl -fsSL https://raw.githubusercontent.com/ulfmansson/ufoscene-pi/main/install.sh | sudo bash</pre><button type="button">Copy</button></div></div>
+    <div class="tip"><b>The Wi-Fi changed?</b> After two minutes without a known network the Pi opens its own network,
+      <b>ufoscene-setup</b>, and the TV shows QR codes to join it and give the Pi the new Wi-Fi.</div>
+    <p>Song names from any device (Last.fm), Spotify control, the self-test and troubleshooting are in the
+       <a href="https://github.com/ulfmansson/ufoscene-pi#readme" target="_blank" rel="noopener">ufoscene-pi README</a>.</p>
+  </section>
+
+  <!-- ================================================================== source -->
+  <section class="box" id="source">
+    <a class="totop" href="#pick">↑ all guides</a>
+    <h2>Run from the source</h2>
+    <p class="meta"><b>Needs:</b> <a href="https://rustup.rs" target="_blank" rel="noopener">Rust</a>, git and Chrome · <b>Takes:</b> 5–10 minutes the first time</p>
+    <p>Build the demos yourself and serve them from your own computer on <code>http://127.0.0.1:8100/</code>, for example to
+       change effects or to use Spotify with your own app.</p>
+
+    <h3>macOS</h3>
+    <ol class="steps">
+      <li>Install Apple's command line tools (the compiler needs them):
+        <div class="cmd"><pre>xcode-select --install</pre><button type="button">Copy</button></div></li>
+      <li>Install Rust (accept the defaults), then open a new terminal:
+        <div class="cmd"><pre>curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh</pre><button type="button">Copy</button></div></li>
+      <li>Get the source:
+        <div class="cmd"><pre>git clone https://github.com/ulfmansson/ufoscene.git ~/ufoscene</pre><button type="button">Copy</button></div></li>
+      <li>Build and serve it:
+        <div class="cmd"><pre>cd ~/ufoscene &amp;&amp; ./run.sh</pre><button type="button">Copy</button></div></li>
+      <li>Open <a href="http://127.0.0.1:8100/">http://127.0.0.1:8100/</a> in Chrome. Stop the server with <kbd>Ctrl</kbd>+<kbd>C</kbd>.</li>
+    </ol>
+    <div class="tip"><b>Linker errors about <code>DEVELOPER_DIR</code> or <code>SDKROOT</code>?</b> A tool such as Nix left
+      them behind; <code>run.sh</code> clears them, but for plain <code>cargo</code> run <code>unset DEVELOPER_DIR SDKROOT</code> first.</div>
+
+    <h3>Linux (and Raspberry Pi)</h3>
+    <ol class="steps">
+      <li>Install a C linker, git and curl (Debian, Ubuntu, Raspberry Pi OS):
+        <div class="cmd"><pre>sudo apt install -y build-essential git curl</pre><button type="button">Copy</button></div></li>
+      <li>Install Rust, then open a new terminal:
+        <div class="cmd"><pre>curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh</pre><button type="button">Copy</button></div></li>
+      <li>Get the source, build and serve it:
+        <div class="cmd"><pre>git clone https://github.com/ulfmansson/ufoscene.git ~/ufoscene && cd ~/ufoscene && ./run.sh</pre><button type="button">Copy</button></div></li>
+      <li>Open <a href="http://127.0.0.1:8100/">http://127.0.0.1:8100/</a> in Chrome or Chromium.</li>
+    </ol>
+
+    <h3>Windows (WSL)</h3>
+    <ol class="steps">
+      <li>Open PowerShell as administrator, install WSL with Ubuntu, and restart when asked:
+        <div class="cmd"><pre>wsl --install</pre><button type="button">Copy</button></div></li>
+      <li>Open <b>Ubuntu</b> from the Start menu and follow the Linux steps above inside it.</li>
+      <li>Open <a href="http://127.0.0.1:8100/">http://127.0.0.1:8100/</a> in Chrome or Edge on Windows; WSL passes the
+          address through.</li>
+    </ol>
+
+    <h3>Good to know</h3>
+    <ul>
+      <li>Port 8100 is taken? <code>PORT=8200 ./run.sh</code>.</li>
+      <li><code>http://127.0.0.1:8100/#42</code> opens demo 42.</li>
+      <li>Spotify on your own copy: register <code>http://127.0.0.1:8100/callback</code> as the redirect URI
+          (Spotify accepts <code>127.0.0.1</code>, not <code>localhost</code>). See <a href="#songs">Song names</a>.</li>
+      <li>Tests: <code>cargo test --release</code>. More in the
+          <a href="https://github.com/ulfmansson/ufoscene#develop" target="_blank" rel="noopener">README</a>.</li>
+    </ul>
+  </section>
+
+  <!-- ================================================================== host -->
+  <section class="box" id="host">
+    <a class="totop" href="#pick">↑ all guides</a>
+    <h2>Host your own site</h2>
+    <p class="meta"><b>Needs:</b> the <a href="#source">source and Rust</a>, zsh (preinstalled on macOS) and an account at one host ·
+       <b>Takes:</b> 15 minutes</p>
+    <p>The site is plain static files: everything runs in the visitor's browser, with no server code or secret.</p>
+    <ol class="steps">
+      <li>Make your settings file. Everything in it ends up public, so only put an API <i>key</i> or Client ID there, never a secret:
+        <div class="cmd"><pre>cd ~/ufoscene/site && cp config.example.json config.json</pre><button type="button">Copy</button></div>
+        Fill in what you want: <code>lastfmApiKey</code>, <code>spotifyClientId</code>, <code>supportUrl</code>; leave the rest empty.</li>
+      <li>Build the site into <code>site/dist/</code>:
+        <div class="cmd"><pre>cd ~/ufoscene/site && SITE_URL=https://your.domain/ ./build.sh</pre><button type="button">Copy</button></div></li>
+      <li>Look at it locally:
+        <div class="cmd"><pre>cd ~/ufoscene && cargo build -p ufo-serve --release && PORT=8310 ./target/release/ufo-serve site/dist</pre><button type="button">Copy</button></div>
+        and open <a href="http://127.0.0.1:8310/">http://127.0.0.1:8310/</a>.</li>
+      <li>Publish <code>site/dist/</code> on one host:
+        <ul>
+          <li><b>Cloudflare</b> (free): <code>cd ~/ufoscene/site && npx wrangler@4 login && ./deploy-cloudflare.sh</code></li>
+          <li><b>Netlify</b> (free plan): <code>cd ~/ufoscene/site && npx netlify-cli deploy --prod --dir dist</code></li>
+          <li><b>GitHub Pages</b> (free for public repositories): publish the contents of <code>dist/</code> to a Pages branch.</li>
+          <li><b>AWS</b> S3 + CloudFront with Pulumi, custom domain included: <code>cd ~/ufoscene/site && AWS_PROFILE=&lt;your-profile&gt; ./deploy.sh dev</code></li>
+        </ul></li>
+      <li>Using Spotify? Add <code>https://your.domain/callback</code> as a redirect URI in your Spotify app.</li>
+    </ol>
+    <div class="tip"><b>All the details</b> (domains, DNS, costs, Spotify's rules for public sites) are in
+      <a href="https://github.com/ulfmansson/ufoscene/blob/main/site/README.md" target="_blank" rel="noopener">site/README.md</a>.</div>
+  </section>
+
+  <!-- ================================================================== songs -->
+  <section class="box" id="songs">
+    <a class="totop" href="#pick">↑ all guides</a>
+    <h2>Song names and artist photos (optional, any setup)</h2>
+    <p>With your own music, UFO can show who is playing: the song in dancing letters, a new demo for every song, and
+       photos of the artist in the graphics. With the radio, the station name is shown instead.</p>
+
+    <h3>Last.fm — free, works for everyone</h3>
+    <ol class="steps">
+      <li>Sign up at <a href="https://www.last.fm/join" target="_blank" rel="noopener">last.fm</a>.</li>
+      <li>Connect your player: <a href="https://www.last.fm/settings/applications" target="_blank" rel="noopener">Settings → Applications</a>
+          → Spotify Scrobbling → <b>Connect</b> (Apple Music, YouTube Music and others have their own scrobblers).</li>
+      <li>Keep your listening public: <a href="https://www.last.fm/settings/privacy" target="_blank" rel="noopener">Settings → Privacy</a>,
+          <i>Hide recent listening information</i> off.</li>
+      <li>In UFO press <kbd>G</kbd> → <b>Set it up</b> → Next → <b>Last.fm</b>, type your username and press <b>Check</b>.
+          On your own copy it also asks for a free
+          <a href="https://www.last.fm/api/account/create" target="_blank" rel="noopener">API key</a>.</li>
+    </ol>
+
+    <h3>Spotify — with your own free developer app (Premium)</h3>
+    <ol class="steps">
+      <li>Open the <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener">Spotify developer dashboard</a> → <b>Create app</b>.</li>
+      <li>Redirect URI: the one the setup guide shows (<kbd>G</kbd> → Set it up → Next → Spotify), with its Copy button.
+          Tick <b>Web API</b> and save.</li>
+      <li>Paste the app's <b>Client ID</b> (not the secret) into the guide and press <b>Connect</b>.</li>
+    </ol>
+    <p>Spotify adds skipping songs with <kbd>Space</kbd> and <kbd>B</kbd>, and playlists made from a text file (panel → More settings).</p>
+  </section>
+
+  <footer>
+    <a href="./">← Back to the demos</a> ·
+    <a href="https://github.com/ulfmansson/ufoscene" target="_blank" rel="noopener">Source on GitHub</a> ·
+    Something missing or wrong? <a href="https://github.com/ulfmansson/ufoscene/issues/new/choose" target="_blank" rel="noopener">Tell us</a>
+  </footer>
+</main>
+<script>
+  // Copy buttons next to commands.
+  for (const b of document.querySelectorAll('.cmd button')) {
+    b.addEventListener('click', async () => {
+      const text = b.previousElementSibling.textContent;
+      try {
+        await navigator.clipboard.writeText(text);
+        b.textContent = 'Copied';
+        b.classList.add('done');
+        setTimeout(() => { b.textContent = 'Copy'; b.classList.remove('done'); }, 1500);
+      } catch {
+        getSelection().selectAllChildren(b.previousElementSibling); // select it for Cmd/Ctrl+C
+      }
+    });
+  }
+  // Mark the guide that matches this device.
+  const ua = navigator.userAgent;
+  const plat = navigator.userAgentData?.platform || navigator.platform || '';
+  const touch = navigator.maxTouchPoints > 1;
+  const env = /Android|iPhone|iPad/i.test(ua) || (/Mac/i.test(plat) && touch) ? 'phone'
+    : /aarch64|armv/i.test(plat + ua) && /Linux/i.test(plat + ua) ? 'pi'
+    : /CrOS/i.test(ua) || /Linux/i.test(plat) ? 'linux'
+    : /Win/i.test(plat) ? 'windows'
+    : /Mac/i.test(plat) ? 'mac' : '';
+  if (env) document.querySelector(`.pick a[data-env="${env}"]`)?.classList.add('mine');
+</script>
+</body>
+</html>

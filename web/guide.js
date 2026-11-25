@@ -107,7 +107,9 @@ export function createGuide(api) {
        genre: ${radioPicker()} <kbd>Space</kbd> changes the station.</p>
     <p><b>Your own music, song names and artist photos:</b> <i>Set it up</i> takes a minute
        (Last.fm or Spotify).</p>
-    <p class="note">This guide comes back with <kbd>G</kbd>; the settings are under <kbd>P</kbd>.</p>
+    <p class="note">This guide comes back with <kbd>G</kbd>; the settings are under <kbd>P</kbd>.
+       <a href="guides.html" target="_blank" rel="noopener">Step-by-step guides</a> for Mac, Windows, Linux, phones,
+       the TV and a Raspberry Pi.</p>
     <div class="nav"><button data-act="close">Just watch</button><span class="spacer"></span>
       <button data-act="setup">Set it up</button><button class="primary" data-act="radio">Just play</button></div>`,
 
@@ -141,7 +143,8 @@ export function createGuide(api) {
        music from this tab for Cast tab. Switch the output back when you are done.`)}
     ${opt('g-audio', 'mic', cur, 'The microphone',
       'No setup: the demos listen to the room. Loud music from speakers works well; quiet music makes them twitchy.')}
-    <p class="note">Start asks for permission the first time. Without any sound the demos run on a 125 BPM autopilot.</p>
+    <p class="note">Start asks for permission the first time. Without any sound the demos run on a 125 BPM autopilot.
+       Windows and Linux have loopbacks too: see the <a href="guides.html#windows" target="_blank" rel="noopener">step-by-step guides</a>.</p>
     ${nav()}`;
     },
 
@@ -202,7 +205,8 @@ export function createGuide(api) {
     <h2>3 · Ready <span class="dots">●●<b>●</b></span></h2>
     <p>Music: <b>${esc(AUDIO[audioKind()] || 'not chosen')}</b><br>Song names: <b>${esc(songsLabel())}</b></p>
     <p><b>On the TV:</b> Chrome ⋮ → <i>Cast, save and share</i> → <i>Cast…</i> → Sources → <b>Cast tab</b>.
-       Press <kbd>T</kbd> for the smoother TV mode and <kbd>F</kbd> for fullscreen.</p>
+       Press <kbd>T</kbd> for the smoother TV mode and <kbd>F</kbd> for fullscreen.
+       HDMI, AirPlay and a Raspberry Pi: <a href="guides.html#tv" target="_blank" rel="noopener">guides</a>.</p>
     <p>Keys: <kbd>Space</kbd> next song or station · <kbd>←</kbd><kbd>→</kbd> demo · <kbd>N</kbd> next part ·
        <kbd>R</kbd> random demo · <kbd>H</kbd> info · <kbd>P</kbd> settings (pauses) · <kbd>G</kbd> this guide.</p>
     <div class="nav"><button data-act="back">Back</button><button data-act="close">Close</button><button class="primary" data-act="start">Start</button></div>`,
