@@ -6,6 +6,7 @@
 
 pub mod audio;
 pub mod demo;
+pub mod eggs;
 pub mod font;
 pub mod fx;
 pub mod gfx;
@@ -61,6 +62,18 @@ pub extern "C" fn ufo_next_scene(d: *mut Demo) {
 #[unsafe(no_mangle)]
 pub extern "C" fn ufo_show_qr(d: *mut Demo) {
     unsafe { (*d).toggle_qr() }
+}
+
+/// Start an easter egg (see `eggs.rs` for the kinds); `arg` is the year for fireworks.
+#[unsafe(no_mangle)]
+pub extern "C" fn ufo_egg(d: *mut Demo, kind: u32, arg: u32) {
+    unsafe { (*d).egg(kind, arg) }
+}
+
+/// Snow over the demos on (1) or off (0).
+#[unsafe(no_mangle)]
+pub extern "C" fn ufo_set_snow(d: *mut Demo, on: u32) {
+    unsafe { (*d).eggs.snow = on != 0 }
 }
 
 #[unsafe(no_mangle)]

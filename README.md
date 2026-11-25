@@ -152,6 +152,19 @@ back into BlackHole, which would loop the sound.
 
 `http://127.0.0.1:8100/#42` opens demo 42.
 
+## Easter eggs
+
+There are a few. No spoilers, only hints:
+
+- A cheat code that every gamer from the 80s knows by heart, typed while a demo runs.
+- A word of three letters. You can guess which.
+- The calendar and the clock: some days and some nights are special, in a Swedish way.
+- The browser console has something to say to sceners.
+- And sometimes something just flies by on its own.
+
+Found one? Tell people with **#ufoscene**. Ideas for more are welcome (see
+[CONTRIBUTING.md](CONTRIBUTING.md)).
+
 ## Song names with Last.fm (optional, works for anyone)
 
 If you scrobble to [Last.fm](https://www.last.fm) (Spotify, Apple Music and most players can),
@@ -263,7 +276,7 @@ the effect looks different in different demos. See the top of `demo/src/fx/mod.r
 | `demo/src/gfx.rs`, `font.rs`, `zx.rs` | framebuffer and primitives, the 5×7 font with ÅÄÖ, the Spectrum room |
 | `demo/src/lib.rs` | the C ABI that `ufo.wasm` exports to the page |
 | `serve/` | std-only static file server on 127.0.0.1 and ::1 |
-| `web/` | `index.html`, `ufo.js` (glue, audio, keys), `guide.js` (setup guide), `radio.js` (internet radio), `spotify.js`, `lastfm.js`, `pictures.js` (Wikidata/Commons photos), `playlist.txt` |
+| `web/` | `index.html`, `ufo.js` (glue, audio, keys), `guide.js` (setup guide), `radio.js` (internet radio), `eggs.js` (when the easter eggs come; they are drawn in `demo/src/eggs.rs`), `spotify.js`, `lastfm.js`, `pictures.js` (Wikidata/Commons photos), `playlist.txt` |
 | `site/` | building and hosting it as a public website (AWS S3 + CloudFront with Pulumi, or Cloudflare): see [`site/README.md`](site/README.md) |
 
 ## Contributing

@@ -5,6 +5,7 @@
 //! the next switch, and again every few parts after that.
 
 use crate::audio::Audio;
+use crate::eggs::{self, Eggs};
 use crate::font::{self, Logo, ScrollStyle, Scroller};
 use crate::fx::{self, Ctx, Def, Effect, Image, Palette, Rng};
 use crate::gfx::*;
@@ -92,6 +93,8 @@ pub struct Demo {
     list: Vec<u8>,
     qr: Option<crate::qr::Qr>,
     qr_since: Option<f32>,
+    /// Easter eggs: snow, a UFO flying by, fireworks and so on.
+    pub eggs: Eggs,
 }
 
 impl Default for Demo {
@@ -163,6 +166,7 @@ impl Demo {
             list,
             qr: crate::qr::encode(SITE_URL.as_bytes()),
             qr_since: None,
+            eggs: Eggs::new(),
         };
         d.set_demo(0);
         d
@@ -223,8 +227,18 @@ impl Demo {
         self.part_beat0 = self.audio.beats;
     }
 
+    /// Start an easter egg (`eggs::FLYBY`, ...) now.
+    pub fn egg(&mut self, kind: u32, arg: u32) {
+        self.eggs.start(kind, arg, self.t);
+    }
+
     /// Next part (the N key). Slips in a picture part when one is due.
     pub fn next_part(&mut self) {
+        // now and then, after the first couple of minutes, a UFO flies by on its own
+        let running = self.t - self.start.unwrap_or(self.t);
+        if running > 120.0 && self.eggs.active(self.t).is_none() && self.rng.below(36) == 0 {
+            self.eggs.start(eggs::FLYBY, 0, self.t);
+        }
         let has_image = self.image.is_some() && !self.image_fx.is_empty();
         if has_image && !self.in_image_part && (self.image_due || self.parts_since_image >= 3) {
             let idx = self.image_fx[self.image_turn as usize % self.image_fx.len()];
@@ -345,6 +359,7 @@ impl Demo {
         if st < 0.6 {
             self.transition(st / 0.6);
         }
+        self.eggs.draw(&mut self.fb, t, dt, &self.audio, &self.pals[self.pal_idx]);
         if let Some(t0) = self.qr_since {
             if t - t0 < QR_SECONDS && t >= t0 {
                 self.draw_qr(t - t0);

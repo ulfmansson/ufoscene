@@ -8,6 +8,7 @@ import { Radio, DECADES, GENRES, DEFAULT_DECADE, DEFAULT_GENRE } from './radio.j
 import * as lastfm from './lastfm.js';
 import { createGuide, audioKind, setAudioKind, canShare, songs } from './guide.js';
 import { initPlaylists } from './playlists.js';
+import { initEggs } from './eggs.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('c');
@@ -410,6 +411,12 @@ for (const i of soundInputs) {
   };
 }
 showSound();
+// easter eggs (see eggs.js); its key codes listen before the keys below
+window.ufo.egg = initEggs({
+  start: (kind, arg) => ex.ufo_egg(demo, kind, arg),
+  snow: (on) => ex.ufo_set_snow(demo, on ? 1 : 0),
+  isRunning: () => panel.style.display === 'none' && !guide?.isOpen(),
+});
 canvas.addEventListener('dblclick', () => document.documentElement.requestFullscreen());
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
