@@ -280,7 +280,7 @@ the effect looks different in different demos. See the top of `demo/src/fx/mod.r
 | `demo/src/fx/deform.rs` | rotozoom, flower and square tunnels, swirl, planes, mode 7, voxel landscape, bump mapping, lens, outrun, planet, flag, Droste |
 | `demo/src/fx/vector.rs` | starfield, dot morph, torus, wireframes, rubber cube, cube field, dot tunnel, bob trails, ray tracer, EQ city, fountain, Lissajous, gems |
 | `demo/src/fx/oldskool.rs` | raster bars, shadebobs, sine dots, parallax, checker wave, radial EQ, analyser, text zoom, dot logo, vertical bars, crawl, night city, snowfall |
-| `demo/src/fx/zxgames.rs` | original ZX Spectrum-style game scenes: isometric room, ladders, maze raid, space shooter, tape loader, text adventure, road racer, war map, panorama |
+| `demo/src/fx/zxgames.rs` | original ZX Spectrum-style game scenes: isometric room, ladders, maze raid, space shooter, tape loader, text adventure, road racer, desert front (a campaign map with unit counters and supply lines), compass view (a lord's first-person view turning through the compass points) |
 | `demo/src/fx/abcgames.rs` | an original ABC 80-style game scene: a moon lander on an emulated Luxor ABC 80 screen (40×24 teletext characters, 78×72 mosaic dots, START/SLUT GRAFIK, the Swedish character set) |
 | `demo/src/fx/image.rs` | the artist picture: dithered portrait, flag, tunnel, rotozoom, halftone |
 | `demo/src/demo.rs` | the demo player: parts, title card, logo, scroller, now playing, transitions, HUD |

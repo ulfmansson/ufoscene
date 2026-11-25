@@ -22,8 +22,8 @@ pub fn register(v: &mut Vec<Def>) {
     v.push(Def { name: "TAPE LOADER", flags: RETRO8 | OWN_TEXT, make: |s| Box::new(TapeLoader::new(s)) });
     v.push(Def { name: "ADVENTURE", flags: RETRO8 | OWN_TEXT, make: |s| Box::new(Adventure::new(s)) });
     v.push(Def { name: "ROAD RACER", flags: RETRO8, make: |s| Box::new(RoadRacer::new(s)) });
-    v.push(Def { name: "WAR MAP", flags: RETRO8, make: |s| Box::new(WarMap::new(s)) });
-    v.push(Def { name: "PANORAMA", flags: RETRO8 | OWN_TEXT, make: |s| Box::new(Panorama::new(s)) });
+    v.push(Def { name: "DESERT FRONT", flags: RETRO8, make: |s| Box::new(Desert::new(s)) });
+    v.push(Def { name: "COMPASS VIEW", flags: RETRO8 | OWN_TEXT, make: |s| Box::new(Compass::new(s)) });
 }
 
 // ================================================================ the Spectrum screen
@@ -891,72 +891,6 @@ mod art {
         ".XXXXXXXXXXXXXX.",
         "..XX.XXXXXX.XX..",
         "...XXXXXXXXXX...",
-    ];
-    pub const PALM: [&str; 8] = [
-        ".XX..XX.",
-        "X..XX..X",
-        "..XXXX..",
-        ".X.XX.X.",
-        "...X....",
-        "...X....",
-        "...X....",
-        "..XXX...",
-    ];
-    pub const BANNER: [&str; 8] = [
-        ".XXXXXXX........",
-        "XXXXXXXX........",
-        ".XXXXXXX........",
-        "...XXXXX........",
-        ".......X........",
-        ".......X........",
-        ".......X........",
-        ".......X........",
-    ];
-    pub const BANNER_B: [&str; 8] = [
-        "...XXXXX........",
-        ".XXXXXXX........",
-        "XXXXXXXX........",
-        ".XX.XXXX........",
-        ".......X........",
-        ".......X........",
-        ".......X........",
-        ".......X........",
-    ];
-    pub const RIDER: [&str; 16] = [
-        "......XXX.......",
-        "......XXX.......",
-        ".......X........",
-        ".....XXXX.......",
-        ".....XXXX....XX.",
-        "....XXXXX...XXXX",
-        "..XXXXXXXXXXXX.X",
-        ".XXXXXXXXXXXX...",
-        "X.XXXXXXXXXXX...",
-        "X.XXXXXXXXXX....",
-        "..XXXXXXXXXX....",
-        "..X.X....X.X....",
-        ".X...X...X..X...",
-        ".X...X..X...X...",
-        "X.....X.X....X..",
-        "................",
-    ];
-    pub const RIDER_B: [&str; 16] = [
-        "......XXX.......",
-        "......XXX.......",
-        ".......X........",
-        ".....XXXX.......",
-        ".....XXXX....XX.",
-        "....XXXXX...XXXX",
-        "..XXXXXXXXXXXX.X",
-        ".XXXXXXXXXXXX...",
-        "X.XXXXXXXXXXX...",
-        "X.XXXXXXXXXX....",
-        "..XXXXXXXXXX....",
-        "..X.X....X.X....",
-        "...XX....XX.....",
-        "...X.X...X.X....",
-        "..X...X.X...X...",
-        "................",
     ];
     pub const SMALL_UFO: [&str; 6] = [
         "......XXXX......",
@@ -3186,582 +3120,801 @@ impl Effect for RoadRacer {
     }
 }
 
-// ================================================================ 8. WAR MAP
+// ================================================================ 8. DESERT FRONT
 
-const HEX_W: i32 = 21;
-const HEX_H: i32 = 11;
+/// Counter rows on the map (each counter is 2×2 cells), north to south.
+const LANES: [i32; 5] = [5, 8, 11, 14, 17];
+const UNIT_TYPES: [&str; 5] = ["ARMD", "INF", "ARTY", "RECCE", "MECH"];
+const SIDES: [&str; 2] = ["TIDE", "DUNE"];
+const DEPOT_NAMES: [&str; 6] = ["NORA", "KESTREL", "OKAPI", "BRAMBLE", "TALLOW", "QUILL"];
+const TOWN_NAMES: [&str; 6] = ["PORT VELA", "MIRASOL", "CAPE TARN", "SALTHAVEN", "LOW KARRO", "AMBERWICK"];
+const RIDGE_NAMES: [&str; 3] = ["SKARP RIDGE", "BRANT RIDGE", "HOLM RIDGE"];
+const WADI_NAMES: [&str; 4] = ["WADI OSSA", "WADI KEL", "WADI MIRR", "WADI TAU"];
+const MONTHS: [(&str, u32); 12] = [
+    ("JAN", 31), ("FEB", 28), ("MAR", 31), ("APR", 30), ("MAY", 31), ("JUN", 30),
+    ("JUL", 31), ("AUG", 31), ("SEP", 30), ("OCT", 31), ("NOV", 30), ("DEC", 31),
+];
 
-/// Centre of hex (q, r): flat-topped hexes in odd-q offset rows.
-fn hex_xy(q: i32, r: i32) -> (f32, f32) {
-    (10.0 + q as f32 * 12.0, 9.0 + r as f32 * 14.0 + (q & 1) as f32 * 7.0)
-}
-
-fn hex_dist(a: (i32, i32), b: (i32, i32)) -> i32 {
-    let cube = |q: i32, r: i32| {
-        let z = r - (q - (q & 1)) / 2;
-        (q, -q - z, z)
-    };
-    let (x0, y0, z0) = cube(a.0, a.1);
-    let (x1, y1, z1) = cube(b.0, b.1);
-    (x0 - x1).abs().max((y0 - y1).abs()).max((z0 - z1).abs())
-}
-
-fn hex_neighbours(q: i32, r: i32) -> [(i32, i32); 6] {
-    if q & 1 == 0 {
-        [(q + 1, r - 1), (q + 1, r), (q, r - 1), (q, r + 1), (q - 1, r - 1), (q - 1, r)]
-    } else {
-        [(q + 1, r), (q + 1, r + 1), (q, r - 1), (q, r + 1), (q - 1, r), (q - 1, r + 1)]
-    }
-}
+/// 3×5 digits for the counters' attack and defence numbers.
+#[rustfmt::skip]
+const DIGITS3: [[u8; 5]; 10] = [
+    [7, 5, 5, 5, 7], [2, 6, 2, 2, 7], [7, 1, 7, 4, 7], [7, 1, 3, 1, 7], [5, 5, 7, 1, 1],
+    [7, 4, 7, 1, 7], [7, 4, 7, 5, 7], [7, 1, 2, 2, 2], [7, 5, 7, 5, 7], [7, 5, 7, 1, 7],
+];
 
 #[derive(Clone, Copy)]
-struct Unit {
+struct Counter {
     side: u8,
     kind: u8,
     num: u8,
-    at: (i32, i32),
-    from: (i32, i32),
-    strength: u8,
+    lane: usize,
+    /// Cells behind the front.
+    depth: i32,
+    atk: u8,
+    def: u8,
+    col: i32,
     hit: f32,
-    dead: f32,
+    gone: f32,
 }
 
-const UNIT_KINDS: [&str; 4] = ["ARMOUR", "RIFLES", "GUNS", "SCOUTS"];
-/// Army names by counter colour.
-fn side_name(colour: u8) -> &'static str {
-    match colour {
-        BLUE => "AZURE",
-        RED => "EMBER",
-        MAGENTA => "ORCHID",
-        _ => "JADE",
+impl Counter {
+    /// The counter's 16×16 face: the unit-size mark, the NATO box with
+    /// its symbol and the attack-defence numbers.
+    fn face(&self, lx: i32, ly: i32) -> bool {
+        if (1..3).contains(&ly) {
+            return lx == 6 || lx == 9;
+        }
+        if (3..10).contains(&ly) {
+            let (bx, by) = (lx - 2, ly - 3);
+            if !(0..12).contains(&bx) {
+                return false;
+            }
+            if bx == 0 || bx == 11 || by == 0 || by == 6 {
+                return true;
+            }
+            let diag = by == 1 + (bx - 1) * 4 / 9;
+            let anti = by == 1 + (10 - bx) * 4 / 9;
+            let oval = (((bx as f32 - 5.5) / 3.6).powi(2) + ((by as f32 - 3.0) / 1.6).powi(2) - 1.0).abs() < 0.4;
+            return match self.kind {
+                0 => oval,
+                1 => diag || anti,
+                2 => (5..7).contains(&bx) && (2..5).contains(&by),
+                3 => anti,
+                _ => diag || anti || oval,
+            };
+        }
+        if (10..15).contains(&ly) {
+            let row = (ly - 10) as usize;
+            let digit = |d: u8, x0: i32| (x0..x0 + 3).contains(&lx) && (DIGITS3[d.min(9) as usize][row] >> (2 - (lx - x0))) & 1 == 1;
+            return digit(self.atk, 3) || digit(self.def, 10) || (ly == 12 && (7..9).contains(&lx));
+        }
+        false
+    }
+
+    fn label(&self) -> String {
+        format!("{} {} {}", SIDES[self.side as usize], self.num, UNIT_TYPES[self.kind as usize])
     }
 }
 
-/// A turn-based desert war game: hex grid over sand with an oasis, a road and
-/// ridges; two invented armies take turns moving a hex per beat, fight on the
-/// kick and the artillery puffs with the treble.
-struct WarMap {
+/// A desert campaign map: a coast with a road and towns along the top, an
+/// escarpment, wadis and two supply depots. The two sides' counters hold a
+/// front that leans with the bass; supply runs out along dashed lines that
+/// surge on every beat, units too far from their depot flash, and on a kick
+/// a combat result comes up. A new turn every four beats, two days each.
+struct Desert {
     scr: Scr,
     clock: Clock,
     rng: Rng,
-    palm: Spr,
-    units: [Unit; 12],
-    terrain: [u8; (HEX_W * HEX_H) as usize],
-    oasis: (i32, i32),
-    road: (f32, f32),
+    /// Last sea row in each column.
+    coast: [i32; 32],
+    escarp: (f32, f32, i32),
+    ridge: &'static str,
+    wadis: [(f32, f32, &'static str); 2],
+    depots: [(i32, i32, &'static str); 2],
+    towns: [(i32, &'static str); 2],
+    units: [Counter; 10],
+    front: f32,
+    wob: f32,
+    push: f32,
+    turn: u32,
+    day: u32,
     colours: [u8; 2],
-    puffs: [(f32, f32, f32); 6],
-    fight: ((f32, f32), (f32, f32), f32),
-    msg: String,
-    msg2: String,
+    result: (String, String),
+    result_at: f32,
 }
 
-impl WarMap {
+impl Desert {
     fn new(seed: u32) -> Self {
-        let mut rng = Rng::new(seed);
-        let oasis = (8 + rng.below(5) as i32, 3 + rng.below(4) as i32);
-        let mut terrain = [0u8; (HEX_W * HEX_H) as usize];
-        // a ridge running diagonally
-        let (rq, rdir) = (4 + rng.below(12) as i32, if rng.below(2) == 0 { 1 } else { -1 });
-        for k in 0..7 {
-            let (q, r) = (rq + k * rdir / 2, 1 + k);
-            if (0..HEX_W).contains(&q) && (0..HEX_H).contains(&r) {
-                terrain[(r * HEX_W + q) as usize] = 3;
+        let mut rng = Rng::new(seed ^ 0xD5E7);
+        let mut coast = [1i32; 32];
+        let mut c = 1 + rng.below(3) as i32;
+        for v in coast.iter_mut() {
+            if rng.below(3) == 0 {
+                c = (c + if rng.below(2) == 0 { -1 } else { 1 }).clamp(1, 3);
             }
+            *v = c;
         }
-        terrain[(oasis.1 * HEX_W + oasis.0) as usize] = 1;
-        let road = (rng.range(105.0, 130.0), rng.range(0.0, TAU));
-        let colours = [[BLUE, RED], [BLUE, MAGENTA], [GREEN, RED]][rng.below(3) as usize];
-        let mut units = [Unit { side: 0, kind: 0, num: 0, at: (0, 0), from: (0, 0), strength: 3, hit: -99.0, dead: -99.0 }; 12];
+        let pick = |r: &mut Rng, n: usize| r.below(n as u32) as usize;
+        let t0 = pick(&mut rng, 6);
+        let towns = [(3 + rng.below(8) as i32, TOWN_NAMES[t0]), (18 + rng.below(9) as i32, TOWN_NAMES[(t0 + 1 + pick(&mut rng, 5)) % 6])];
+        let d0 = pick(&mut rng, 6);
+        let depots = [
+            (1 + rng.below(3) as i32, 7 + rng.below(9) as i32, DEPOT_NAMES[d0]),
+            (27 + rng.below(3) as i32, 7 + rng.below(9) as i32, DEPOT_NAMES[(d0 + 1 + pick(&mut rng, 5)) % 6]),
+        ];
+        let w0 = pick(&mut rng, 4);
+        let wadis = [
+            (rng.range(40.0, 110.0), rng.range(0.0, TAU), WADI_NAMES[w0]),
+            (rng.range(150.0, 220.0), rng.range(0.0, TAU), WADI_NAMES[(w0 + 1 + pick(&mut rng, 3)) % 4]),
+        ];
+        let colours = [[RED, BLUE], [BLUE, MAGENTA], [RED, GREEN], [MAGENTA, BLUE]][pick(&mut rng, 4)];
+        let mut units = [Counter { side: 0, kind: 0, num: 0, lane: 0, depth: 0, atk: 4, def: 4, col: 0, hit: -99.0, gone: -99.0 }; 10];
         for (i, u) in units.iter_mut().enumerate() {
-            let side = (i / 6) as u8;
-            let row = (i % 6) as i32 * 2 - 1 + (i / 6) as i32;
-            let q = if side == 0 { 1 + (i % 2) as i32 } else { HEX_W - 2 - (i % 2) as i32 };
-            u.side = side;
-            u.kind = (i % 4) as u8;
-            u.num = 1 + (rng.below(9) as u8) + (i as u8 % 3) * 10;
-            u.at = (q, row.clamp(0, HEX_H - 1));
-            u.from = u.at;
+            u.side = (i / 5) as u8;
+            u.lane = i % 5;
+            u.kind = ((i + rng.below(5) as usize) % 5) as u8;
+            u.num = 1 + rng.below(29) as u8;
+            u.depth = rng.below(3) as i32;
+            u.atk = 2 + rng.below(7) as u8;
+            u.def = 2 + rng.below(7) as u8;
         }
-        WarMap {
+        let mut d = Desert {
             scr: Scr::new(),
             clock: Clock::default(),
-            rng,
-            palm: spr(&art::PALM),
+            coast,
+            escarp: (rng.range(76.0, 92.0), rng.range(0.0, TAU), 40 + rng.below(170) as i32),
+            ridge: RIDGE_NAMES[pick(&mut rng, 3)],
+            wadis,
+            depots,
+            towns,
             units,
-            terrain,
-            oasis,
-            road,
+            front: rng.range(104.0, 152.0),
+            wob: rng.range(0.0, TAU),
+            push: 0.0,
+            turn: 1,
+            day: rng.below(365),
             colours,
-            puffs: [(0.0, 0.0, -99.0); 6],
-            fight: ((0.0, 0.0), (0.0, 0.0), -99.0),
-            msg: "BOTH ARMIES DIG IN AT DAWN.".into(),
-            msg2: "THE DESERT WAITS.".into(),
-        }
+            result: ("BOTH SIDES DIG IN ALONG THE".into(), "LINE. WAITING FOR SUPPLIES.".into()),
+            result_at: -99.0,
+            rng,
+        };
+        d.snap();
+        d
     }
 
-    fn place(&self, h: (i32, i32)) -> &'static str {
-        if hex_dist(h, self.oasis) <= 2 {
-            "SALTBRUNN OASIS"
-        } else if self.terrain[(h.1 * HEX_W + h.0) as usize] == 3 {
-            "KORP RIDGE"
-        } else if (hex_xy(h.0, h.1).1 - self.road_y(hex_xy(h.0, h.1).0)).abs() < 10.0 {
-            "THE DUNE ROAD"
-        } else {
-            "THE OPEN SAND"
-        }
+    fn sign(&self) -> f32 {
+        if self.turn % 2 == 1 { 1.0 } else { -1.0 }
     }
 
-    fn road_y(&self, x: f32) -> f32 {
-        self.road.0 + 16.0 * (x * 0.017 + self.road.1).sin() + 5.0 * (x * 0.05).sin()
+    /// The front line's x at pixel row `y`; it leans toward the defender with the bass.
+    fn front_x(&self, y: f32) -> f32 {
+        self.front + 9.0 * (y * 0.045 + self.wob).sin() + 5.0 * (y * 0.12 + self.wob * 2.0).sin() + self.push * self.sign() * 20.0
     }
 
-    fn occupied(&self, h: (i32, i32)) -> bool {
-        self.units.iter().any(|u| u.dead < -50.0 && u.at == h)
-    }
-
-    /// One side moves: every unit steps one hex toward its nearest enemy.
-    fn move_side(&mut self, side: u8, bt: f32) {
-        for i in 0..12 {
+    /// Counters keep to the cells behind the front.
+    fn snap(&mut self) {
+        for i in 0..10 {
             let u = self.units[i];
-            self.units[i].from = u.at;
-            if u.side != side || u.dead > -50.0 {
-                continue;
-            }
-            let enemy = self
-                .units
-                .iter()
-                .filter(|e| e.side != side && e.dead < -50.0)
-                .min_by_key(|e| hex_dist(e.at, u.at))
-                .map(|e| e.at);
-            let goal = enemy.unwrap_or(self.oasis);
-            if hex_dist(goal, u.at) <= 1 {
-                continue;
-            }
-            let mut best = (hex_dist(goal, u.at), u.at);
-            for n in hex_neighbours(u.at.0, u.at.1) {
-                if !(0..HEX_W).contains(&n.0) || !(0..HEX_H).contains(&n.1) || self.occupied(n) {
-                    continue;
-                }
-                let d = hex_dist(goal, n) * 4 + self.rng.below(3) as i32;
-                if d < best.0 * 4 {
-                    best = (d / 4, n);
-                }
-            }
-            self.units[i].at = best.1;
-        }
-        // the fallen come back as reinforcements on their own edge
-        for i in 0..12 {
-            let u = self.units[i];
-            if u.dead > -50.0 && bt - u.dead > 6.0 {
-                let q = if u.side == 0 { 0 } else { HEX_W - 1 };
-                let h = (q, self.rng.below(HEX_H as u32) as i32);
-                if !self.occupied(h) {
-                    self.units[i] = Unit { at: h, from: h, strength: 3, dead: -99.0, hit: -99.0, ..u };
-                }
-            }
+            let fc = (self.front_x((LANES[u.lane] * 8 + 8) as f32) / 8.0).floor() as i32;
+            let col = if u.side == 0 { fc - 2 - u.depth } else { fc + 1 + u.depth };
+            self.units[i].col = col.clamp(0, 30);
         }
     }
 
-    fn attack(&mut self, side: u8, bt: f32, turn: u32) {
-        let mut pairs = [(0usize, 0usize); 12];
-        let mut n = 0;
-        for i in 0..12 {
-            for j in 0..12 {
-                let (u, e) = (self.units[i], self.units[j]);
-                if u.side == side && e.side != side && u.dead < -50.0 && e.dead < -50.0 && hex_dist(u.at, e.at) <= if u.kind == 2 { 2 } else { 1 } && n < 12 {
-                    pairs[n] = (i, j);
-                    n += 1;
-                }
-            }
+    fn supplied(&self, u: &Counter) -> bool {
+        let (dc, dr, _) = self.depots[u.side as usize];
+        (u.col - dc).abs() + (LANES[u.lane] - dr).abs() / 2 <= 11
+    }
+
+    fn place(&self, u: &Counter) -> &'static str {
+        match u.lane {
+            0 => self.towns.iter().min_by_key(|t| (t.0 - u.col).abs()).map_or("THE COAST", |t| t.1),
+            1 | 2 => self.ridge,
+            l => self.wadis[l - 3].2,
         }
-        if n == 0 {
+    }
+
+    /// One attack across the front, in the lane `lane`.
+    fn combat(&mut self, lane: usize, bt: f32) {
+        let att_side = (1 - self.turn % 2) as usize;
+        let (ai, di) = (att_side * 5 + lane, (1 - att_side) * 5 + lane);
+        let (att, def) = (self.units[ai], self.units[di]);
+        if att.gone > -50.0 || def.gone > -50.0 {
             return;
         }
-        let (i, j) = pairs[self.rng.below(n as u32) as usize];
-        let (u, e) = (self.units[i], self.units[j]);
-        self.units[i].hit = bt;
-        self.units[j].hit = bt;
-        let dmg = 1 + (self.rng.below(3) == 0) as u8;
-        self.units[j].strength = e.strength.saturating_sub(dmg);
-        self.fight = (hex_xy(u.at.0, u.at.1), hex_xy(e.at.0, e.at.1), bt);
-        let place = self.place(e.at);
-        self.msg = format!("TURN {turn}: {} {} {} HITS", side_name(self.colours[u.side as usize]), UNIT_KINDS[u.kind as usize], u.num);
-        if self.units[j].strength == 0 {
-            self.units[j].dead = bt;
-            self.msg2 = format!("{} {} {} AT {place}. ROUTED!", side_name(self.colours[e.side as usize]), UNIT_KINDS[e.kind as usize], e.num);
+        let odds = att.atk as f32 / def.def.max(1) as f32;
+        let roll = self.rng.f() + (odds - 1.0) * 0.25;
+        let res = if roll > 0.85 {
+            self.units[di].gone = bt;
+            "DEFENDER ROUTED"
+        } else if roll > 0.6 {
+            self.units[di].def = def.def.saturating_sub(1);
+            self.units[di].depth = (def.depth + 1).min(4);
+            "DEFENDER RETREATS"
+        } else if roll > 0.4 {
+            self.units[ai].atk = att.atk.saturating_sub(1);
+            self.units[di].def = def.def.saturating_sub(1);
+            "EXCHANGE"
+        } else if roll > 0.2 {
+            "NO EFFECT"
         } else {
-            self.msg2 = format!("{} {} {} AT {place}.", side_name(self.colours[e.side as usize]), UNIT_KINDS[e.kind as usize], e.num);
+            self.units[ai].atk = att.atk.saturating_sub(1);
+            self.units[ai].depth = (att.depth + 1).min(4);
+            "ATTACKER RETREATS"
+        };
+        for i in [ai, di] {
+            self.units[i].hit = bt;
+            if self.units[i].atk == 0 || self.units[i].def == 0 {
+                self.units[i].gone = bt;
+            }
+        }
+        self.result = (format!("{} VS {}", att.label(), def.label()), format!("{res} AT {}", self.place(&def)));
+        self.result_at = bt;
+    }
+
+    fn date(&self) -> (u32, &'static str) {
+        let mut d = self.day % 365;
+        for (name, len) in MONTHS {
+            if d < len {
+                return (d + 1, name);
+            }
+            d -= len;
+        }
+        (1, "JAN")
+    }
+}
+
+/// A dashed line from `a` to `b` whose dashes run toward `b` as `phase` grows.
+fn supply_line(s: &mut Scr, a: (f32, f32), b: (f32, f32), phase: f32, bright: bool) {
+    let n = ((b.0 - a.0).hypot(b.1 - a.1) / 2.0) as i32;
+    for i in 0..n {
+        if (i as f32 - phase).rem_euclid(5.0) < 2.5 {
+            let k = i as f32 / n.max(1) as f32;
+            let (x, y) = (lerp(a.0, b.0, k) as i32, lerp(a.1, b.1, k) as i32);
+            s.plot(x, y);
+            s.plot(x + 1, y);
+            if bright {
+                s.each_cell(x, y, 1, 1, |v| v | 0x40);
+            }
         }
     }
 }
 
-impl Effect for WarMap {
+impl Effect for Desert {
     fn draw(&mut self, fb: &mut Fb, c: &Ctx) {
         let a = c.a;
         let (bt, new_beat) = self.clock.tick(c);
-        let side = (c.beats % 2) as u8;
-        let turn = c.beats / 2 + 1;
+        self.push += (a.bass - self.push) * (1.0 - (-c.dt * 4.0).exp());
         if new_beat {
-            self.move_side(side, bt);
-            if a.bass > 0.45 || a.pulse > 0.8 {
-                self.attack(side, bt, turn);
+            if c.beats % 4 == 0 {
+                self.turn += 1;
+                self.day += 2;
+                // the side that attacked last turn gains a little ground
+                self.front = (self.front - self.sign() * self.rng.range(0.0, 9.0)).clamp(80.0, 176.0);
+            }
+            for u in self.units.iter_mut() {
+                if u.gone > -50.0 && bt - u.gone > 6.0 {
+                    *u = Counter { gone: -99.0, hit: -99.0, depth: 3, atk: 3 + (u.num % 4), def: 3 + (u.num % 3), num: (u.num % 29) + 1, ..*u };
+                }
+            }
+            self.snap();
+            if (a.pulse > 0.75 || a.bass > 0.6) && bt - self.result_at > 1.5 {
+                let lane = self.rng.below(5) as usize;
+                self.combat(lane, bt);
             }
         }
-        // artillery puffs with the treble
-        if a.treble > 0.4 && self.rng.f() < a.treble * c.dt * 8.0 {
-            if let Some(slot) = self.puffs.iter().position(|p| bt - p.2 > 0.8) {
-                let u = self.units[self.rng.below(12) as usize];
-                let (x, y) = hex_xy(u.at.0, u.at.1);
-                self.puffs[slot] = (x + self.rng.range(-14.0, 14.0), y + self.rng.range(-10.0, 10.0), bt);
-            }
-        }
+        let frac = fract(bt);
+        let fresh = bt - self.result_at < 1.5;
 
+        let fed: [bool; 10] = std::array::from_fn(|i| self.supplied(&self.units[i]));
+        let fronts: Vec<i32> = (8..160).map(|y| self.front_x(y as f32) as i32).collect();
+        let teeth = -self.sign() as i32;
+        let (dd, month) = self.date();
         let s = &mut self.scr;
         s.clear(at(BLACK, YELLOW));
-        s.rect(0, 0, 256, 168, |x, y| (hash((x * 389 + y * 1013) as u32) & 127) == 0);
-        // hex grid
-        for q in 0..HEX_W {
-            for r in 0..HEX_H {
-                let (x, y) = hex_xy(q, r);
-                let v = [(x - 8.0, y), (x - 4.0, y - 7.0), (x + 4.0, y - 7.0), (x + 8.0, y), (x + 4.0, y + 7.0), (x - 4.0, y + 7.0)];
-                for e in 0..6 {
-                    s.line(v[e], v[(e + 1) % 6], true);
-                }
-                if self.terrain[(r * HEX_W + q) as usize] == 3 {
-                    for k in -1..=1 {
-                        let bx = x + k as f32 * 5.0;
-                        s.line((bx - 3.0, y + 2.0), (bx, y - 2.0), false);
-                        s.line((bx, y - 2.0), (bx + 3.0, y + 2.0), false);
+        s.cells(0, 0, 32, 1, at(WHITE | BR, BLACK));
+        s.rect(0, 8, 256, 152, |x, y| (hash((x * 389 + y * 1013) as u32) & 63) == 0);
+        // the sea, with waves rolling in
+        let tide = (c.t * 3.0) as i32;
+        for col in 0..32 {
+            for row in 1..=self.coast[col as usize] {
+                s.cell(col, row, at(CYAN | BR, BLUE));
+                for py in 0..8 {
+                    let y = row * 8 + py;
+                    for px in 0..8 {
+                        let x = col * 8 + px;
+                        s.set(x, y, py % 4 == 1 && (x + y * 3 + tide).rem_euclid(9) < 3);
                     }
-                    s.ink(x as i32 - 8, y as i32 - 4, 16, 8, RED);
+                }
+            }
+            // surf on the beach
+            let y = (self.coast[col as usize] + 1) * 8;
+            for x in col * 8..col * 8 + 8 {
+                if (x + tide) % 3 != 0 {
+                    s.plot(x, y);
                 }
             }
         }
-        // the road
+        // the coast road and its towns
+        let road = |coast: &[i32; 32], x: i32| -> i32 {
+            let cx = (x - 4).clamp(0, 247);
+            let (c0, k) = ((cx / 8) as usize, (cx % 8) as f32 / 8.0);
+            let y0 = (coast[c0] + 2) * 8 + 3;
+            let y1 = (coast[(c0 + 1).min(31)] + 2) * 8 + 3;
+            lerp(y0 as f32, y1 as f32, k) as i32
+        };
         for x in 0..SW {
-            let y = self.road.0 + 16.0 * (x as f32 * 0.017 + self.road.1).sin() + 5.0 * (x as f32 * 0.05).sin();
-            s.plot(x, y as i32 - 2);
-            s.plot(x, y as i32 + 2);
-            if x % 4 < 2 {
-                s.plot(x, y as i32);
+            let y = road(&self.coast, x);
+            s.plot(x, y);
+            if x % 3 != 0 {
+                s.plot(x, y + 2);
             }
         }
-        // the oasis
-        let (ox, oy) = hex_xy(self.oasis.0, self.oasis.1);
-        s.oval(ox, oy, 15.0, 8.0, |x, y| !((y as f32 - oy).abs() < 0.5 && x % 5 < 2));
-        s.ink(ox as i32 - 15, oy as i32 - 8, 30, 16, BLUE);
-        for (dx, dy) in [(-22.0, -10.0), (18.0, -12.0), (-16.0, 6.0), (20.0, 4.0)] {
-            s.sprite(&self.palm, (ox + dx) as i32 - 4, (oy + dy) as i32 - 4, dx > 0.0, GREEN);
+        for &(col, name) in &self.towns {
+            let y = road(&self.coast, col * 8 + 4);
+            s.rect(col * 8 + 2, y - 2, 5, 5, |_, _| true);
+            let row = self.coast[col as usize];
+            let start = (col - name.len() as i32 / 2).clamp(0, 32 - name.len() as i32);
+            s.print(start, row, name, Some(at(WHITE | BR, BLUE)));
         }
-        // a combat line between attacker and target
-        let (fa, fd, ft) = self.fight;
-        let fight_age = bt - ft;
-        if fight_age < 0.6 {
-            s.line(fa, fd, true);
-            s.burst(fd.0, fd.1, fight_age / 0.6, ft as u32);
+        // the escarpment, ticks on the low side, a pass through it
+        let (ey, eph, pass) = self.escarp;
+        for x in 0..SW {
+            if (pass..pass + 16).contains(&x) {
+                continue;
+            }
+            let y = (ey + 10.0 * (x as f32 * 0.03 + eph).sin() + 3.0 * (x as f32 * 0.11).sin()) as i32;
+            s.plot(x, y);
+            if x % 4 == 0 {
+                s.ln(x, y + 1, x, y + 3);
+            }
         }
-        // unit counters
-        let e = smoothstep(fract(bt).min(1.0) * 1.5);
-        for u in &self.units {
-            if u.dead > -50.0 {
-                if bt - u.dead < 1.0 {
-                    let (x, y) = hex_xy(u.at.0, u.at.1);
-                    s.burst(x, y, bt - u.dead, u.num as u32);
+        // wadis winding north toward the coast
+        for &(wx, wph, _) in &self.wadis {
+            for y in (64..160).step_by(3) {
+                let x = wx + 12.0 * (y as f32 * 0.05 + wph).sin();
+                s.plot(x as i32, y);
+                s.plot(x as i32 + 3, y + 1);
+            }
+        }
+        // depots
+        const CRATE: [u8; 8] = [0xFF, 0x81, 0xBD, 0xA5, 0xA5, 0xBD, 0x81, 0xFF];
+        for (side, &(col, row, name)) in self.depots.iter().enumerate() {
+            s.tile(col, row, &CRATE);
+            s.cell(col, row, at(self.colours[side] | BR, YELLOW));
+            let nx = if side == 0 { col + 1 } else { col - name.len() as i32 };
+            s.print(nx, row, name, None);
+        }
+        // the front: a line with teeth toward the defender
+        for (y, &x) in (8..160).zip(&fronts) {
+            s.plot(x, y);
+            s.plot(x + 1, y);
+            if y % 8 < 3 {
+                s.plot(x + 2 * teeth + (y % 8) * teeth, y);
+            }
+            s.ink(x, y, 2, 1, RED);
+        }
+        // supply lines surge toward the units on every beat
+        let phase = bt.floor() * 5.0 + smoothstep(frac.min(1.0)) * 5.0;
+        let mut out = 0;
+        for (u, &fed) in self.units.iter().zip(&fed) {
+            if u.gone > -50.0 {
+                continue;
+            }
+            let (dc, dr, _) = self.depots[u.side as usize];
+            if fed {
+                let from = (dc as f32 * 8.0 + 4.0, dr as f32 * 8.0 + 4.0);
+                let to = (u.col as f32 * 8.0 + 8.0, LANES[u.lane] as f32 * 8.0 + 8.0);
+                supply_line(s, from, to, phase, frac < 0.15);
+            } else {
+                out += 1;
+            }
+        }
+        // the counters
+        for (u, &fed) in self.units.iter().zip(&fed) {
+            let (col, row) = (u.col, LANES[u.lane]);
+            if u.gone > -50.0 {
+                if bt - u.gone < 1.0 {
+                    s.burst(col as f32 * 8.0 + 8.0, row as f32 * 8.0 + 8.0, bt - u.gone, u.num as u32);
                 }
                 continue;
             }
-            let (x0, y0) = hex_xy(u.from.0, u.from.1);
-            let (x1, y1) = hex_xy(u.at.0, u.at.1);
-            let (x, y) = (lerp(x0, x1, e) as i32, lerp(y0, y1, e) as i32);
-            let flash = bt - u.hit < 0.5 && (c.t * 16.0) as i32 % 2 == 0;
-            let (bx, by) = (x - 6, y - 5);
-            s.rect(bx - 1, by - 1, 14, 12, |_, _| false);
-            s.rect(bx, by, 12, 10, |xx, yy| {
-                let (lx, ly) = (xx - bx, yy - by);
-                let edge = lx == 0 || lx == 11 || ly == 0 || ly == 9;
-                let inner = (2..10).contains(&lx) && (2..7).contains(&ly);
-                let sym = match u.kind {
-                    0 => inner && (((lx as f32 - 5.5) / 3.5).powi(2) + ((ly as f32 - 4.0) / 2.0).powi(2) - 1.0).abs() < 0.45,
-                    1 => inner && ((lx - 2) * 5 / 8 == ly - 2 || (9 - lx) * 5 / 8 == ly - 2),
-                    2 => inner && (lx - 6).abs() <= 1 && (ly - 4).abs() <= 1,
-                    _ => inner && (lx - 2) * 5 / 8 == ly - 2,
-                };
-                let pips = ly == 8 && (2..2 + u.strength as i32 * 3).contains(&lx) && (lx - 2) % 3 != 2;
-                let solid = !(edge || sym || pips);
-                if flash { !solid } else { solid }
-            });
-            s.ink(bx, by, 12, 10, self.colours[u.side as usize]);
-        }
-        for p in &self.puffs {
-            let age = (bt - p.2) / 0.8;
-            if (0.0..1.0).contains(&age) {
-                let r = 2.0 + age * 7.0;
-                for k in 0..10 {
-                    let ang = k as f32 / 10.0 * TAU;
-                    s.plot((p.0 + ang.cos() * r) as i32, (p.1 + ang.sin() * r * 0.7) as i32);
-                }
-                if age < 0.4 {
-                    s.oval(p.0, p.1, 2.0, 2.0, |_, _| true);
+            let blink = bt - u.hit < 0.6 && (c.t * 16.0) as i32 % 2 == 0;
+            for ly in 0..16 {
+                for lx in 0..16 {
+                    s.set(col * 8 + lx, row * 8 + ly, u.face(lx, ly) != blink);
                 }
             }
+            let mut attr = at(WHITE | BR, self.colours[u.side as usize]);
+            if !fed {
+                attr |= FLASH;
+            }
+            s.cells(col, row, 2, 2, attr);
         }
-        // the report bar
-        s.clear_rows(21, 24);
-        s.cells(0, 21, 32, 1, at(YELLOW | BR, BLUE));
-        s.print(0, 21, "TURN", None);
-        s.num(5, 21, turn % 1000, 3, None);
-        let alive = |sd: u8| self.units.iter().filter(|u| u.side == sd && u.dead < -50.0).count() as u32;
-        let (n0, n1) = (side_name(self.colours[0]), side_name(self.colours[1]));
-        s.cells(9, 21, 8, 1, at(WHITE | BR, self.colours[0]));
-        s.print(9, 21, n0, None);
-        s.num(16, 21, alive(0), 1, None);
-        s.cells(18, 21, 8, 1, at(WHITE | BR, self.colours[1]));
-        s.print(18, 21, n1, None);
-        s.num(25, 21, alive(1), 1, None);
-        s.print(27, 21, if side == 0 { "<MOVE" } else { "MOVE>" }, None);
+
+        // title, turn and date
+        s.clear_rows(0, 1);
+        s.print(0, 0, "DESERT FRONT", None);
+        s.print(18, 0, "TURN", Some(at(YELLOW | BR, BLACK)));
+        s.num(23, 0, self.turn % 100, 2, Some(at(YELLOW | BR, BLACK)));
+        s.num(26, 0, dd, 2, None);
+        s.print(29, 0, month, None);
+        // status and the combat report
+        s.clear_rows(20, 24);
+        s.cells(0, 20, 32, 1, at(YELLOW, YELLOW));
+        s.cells(0, 21, 32, 1, at(BLACK, WHITE | BR));
+        let units = if out == 1 { "UNIT" } else { "UNITS" };
+        s.print(0, 21, &format!("TURN {} - {out} {units} OUT OF SUPPLY", self.turn % 100), None);
         s.cells(0, 22, 32, 2, at(WHITE | BR, BLACK));
-        s.print(0, 22, &self.msg, None);
-        s.print(0, 23, &self.msg2, None);
-        if fight_age < 0.6 {
-            s.cells(0, 22, 32, 2, at(YELLOW | BR, BLACK));
+        s.print(0, 22, &self.result.0, None);
+        s.print(0, 23, &self.result.1, None);
+        if fresh {
+            s.cells(0, 22, 32, 2, at(YELLOW | BR, BLACK) | FLASH);
         }
-        let bc = zx(if fight_age < 0.12 { WHITE } else { BLACK });
+        let bc = zx(if bt - self.result_at < 0.15 { WHITE } else { YELLOW });
         border(fb, |_| bc);
-        self.scr.render(fb, c.beats % 2 == 1);
+        let flash_on = if fresh { (c.t * 8.0) as i32 % 2 == 0 } else { c.beats % 2 == 1 };
+        self.scr.render(fb, flash_on);
     }
 }
 
-// ================================================================ 9. PANORAMA
+// ================================================================ 9. COMPASS VIEW
 
 const DIRS: [&str; 8] = ["NORTH", "NORTH-EAST", "EAST", "SOUTH-EAST", "SOUTH", "SOUTH-WEST", "WEST", "NORTH-WEST"];
-const DIRS_SV: [&str; 8] = ["NORR", "NORDOST", "ÖSTER", "SYDOST", "SÖDER", "SYDVÄST", "VÄSTER", "NORDVÄST"];
-const PLAINS: [&str; 8] = ["VARGHEM", "ISBERGA", "MÅNEDAL", "KORPMARK", "DIMMALUND", "STJÄRNHED", "ULVÅSA", "SNÖTORP"];
-const PAN_W: i32 = 2048;
+/// The sixteen regions of the realm, four by four.
+#[rustfmt::skip]
+const REGIONS: [&str; 16] = [
+    "KALLMYR", "ASKELUND", "GRÅHEDEN", "VITBERGA", "MÖRKVIK", "TJÄRNÅS", "SILVERÅS", "ULVSTAD",
+    "FROSTHEM", "BJÖRKSKOG", "STENVALL", "DIMBACKA", "ROSENHÄLL", "HÖGVAKT", "SVANSJÖ", "ELDHAMN",
+];
+/// The lords: name, banner field, device colour, device.
+const LORDS: [(&str, u8, u8, u8); 5] = [
+    ("TARVEN THE GREY", BLACK, WHITE, 0),
+    ("LADY ISMERA", BLUE, YELLOW, 1),
+    ("BRANDOR THE BOLD", RED, YELLOW, 2),
+    ("VELKA THE WISE", MAGENTA, WHITE, 3),
+    ("HOLGER STORMHAND", GREEN, WHITE, 4),
+];
+const REALM: i32 = 16;
+const PLAINS: u8 = 0;
+const FOREST: u8 = 1;
+const DOWNS: u8 = 2;
+const PEAKS: u8 = 3;
+const LAKE: u8 = 4;
+const KEEP: u8 = 5;
+const TOWER: u8 = 6;
+const HORIZON: f32 = 96.0;
+/// Screen pixels per unit of sideways offset over distance: the field of view.
+const FOCAL: f32 = 110.0;
 
-/// A first-person fantasy panorama: mountains, forests, towers and keeps
-/// around a full circle; the view turns every 8 beats while a column of
-/// banner riders crosses the plain at a speed from the bass.
-struct Panorama {
+/// The angle in degrees from `view` to `w`, in -180..180.
+fn turn_to(w: f32, view: f32) -> f32 {
+    (w - view + 180.0).rem_euclid(360.0) - 180.0
+}
+
+/// One landmark of the realm drawn at screen x `x`, standing on row `base`,
+/// `u` pixels to the unit of size.
+fn landmark(s: &mut Scr, kind: u8, x: f32, base: f32, u: f32, bt: f32, id: u32) {
+    let px = |k: f32| (x + k * u) as i32;
+    let py = |k: f32| (base - k * u) as i32;
+    let w = |k: f32| ((k * u) as i32).max(1);
+    match kind {
+        PEAKS => {
+            let peak = x + ((id % 3) as f32 - 1.0) * 0.3 * u;
+            let pts = [(x - 1.7 * u, base), (peak, base - 2.4 * u), (x + 1.7 * u, base)];
+            s.poly(&pts, false, |qx, qy| (qx as f32) < peak || (qx + qy) % 2 == 0);
+            s.line((peak, base - 2.4 * u), (x + 1.7 * u, base), false);
+        }
+        DOWNS => {
+            s.oval(x, base, 1.7 * u, 0.7 * u, |qx, qy| (qx + qy) % 2 == 0 || qy as f32 > base - 0.3 * u);
+        }
+        FOREST => {
+            let n = 3 + (id % 3) as i32;
+            for t in 0..n {
+                let tx = x + (t as f32 - (n - 1) as f32 / 2.0) * 0.55 * u;
+                let th = u * (1.1 + (hash(id + t as u32) % 5) as f32 * 0.1);
+                s.poly(&[(tx - 0.36 * u, base - 0.2 * u), (tx, base - th), (tx + 0.36 * u, base - 0.2 * u)], false, |_, _| true);
+                s.rect((tx - 0.06 * u) as i32, py(0.25), w(0.12), w(0.25), |_, _| true);
+            }
+        }
+        KEEP => {
+            s.rect(px(-1.0), py(1.1), w(2.0), w(1.1), |_, _| true);
+            for t in [-1.15, 0.7] {
+                s.rect(px(t), py(1.7), w(0.45), w(1.7), |_, _| true);
+            }
+            for m in 0..5 {
+                s.rect(px(-0.7 + m as f32 * 0.32), py(1.25), w(0.16), w(0.16), |_, _| true);
+            }
+            s.rect(px(-0.2), py(0.55), w(0.4), w(0.55), |_, _| false);
+            s.rect(px(-0.98), py(1.4), w(0.1), w(0.15), |_, _| false);
+            s.rect(px(0.88), py(1.4), w(0.1), w(0.15), |_, _| false);
+        }
+        TOWER => {
+            s.rect(px(-0.25), py(2.4), w(0.5), w(2.4), |_, _| true);
+            s.poly(&[(x - 0.42 * u, base - 2.4 * u), (x, base - 3.1 * u), (x + 0.42 * u, base - 2.4 * u)], false, |_, _| true);
+            s.rect(px(-0.06), py(1.9), w(0.12), w(0.25), |_, _| false);
+            let top = py(3.1);
+            s.ln(x as i32, top, x as i32, top - w(0.4));
+            let wave = (bt * 2.0) as i32 % 2;
+            s.rect(x as i32 + 1, top - w(0.4) + wave, w(0.3), w(0.14), |_, _| true);
+        }
+        LAKE => {
+            s.oval(x, base, 1.7 * u, 0.25 * u, |qx, qy| qy % 2 == 0 && (qx + qy * 3) % 5 != 0);
+        }
+        _ => {}
+    }
+}
+
+/// A banner, 3×3 cells: the field in one colour, the device in another.
+fn banner(s: &mut Scr, col: i32, row: i32, lord: (&str, u8, u8, u8), wave: bool) {
+    let (x0, y0) = (col * 8, row * 8);
+    s.rect(x0, y0, 24, 24, |_, _| false);
+    let (cx, cy) = (x0 as f32 + 11.5, y0 as f32 + 11.0);
+    match lord.3 {
+        0 => {
+            for d in 0..3 {
+                s.ln(x0 + 2 + d, y0 + 2, x0 + 19 + d, y0 + 20);
+                s.ln(x0 + 21 - d, y0 + 2, x0 + 4 - d, y0 + 20);
+            }
+        }
+        1 => {
+            s.rect(x0 + 10, y0 + 2, 4, 19, |_, _| true);
+            s.rect(x0 + 3, y0 + 8, 18, 4, |_, _| true);
+        }
+        2 => {
+            s.oval(cx, cy, 5.0, 5.0, |_, _| true);
+            for k in 0..8 {
+                let ang = k as f32 * TAU / 8.0;
+                s.line((cx + ang.cos() * 7.0, cy + ang.sin() * 7.0), (cx + ang.cos() * 9.5, cy + ang.sin() * 9.5), false);
+            }
+        }
+        3 => {
+            s.oval(cx, cy, 7.0, 7.0, |_, _| true);
+            s.oval(cx + 3.5, cy - 1.5, 6.0, 6.0, |_, _| false);
+        }
+        _ => {
+            for d in 0..4 {
+                s.ln(x0 + 2, y0 + 17 - d, x0 + 12, y0 + 6 - d);
+                s.ln(x0 + 12, y0 + 6 - d, x0 + 22, y0 + 17 - d);
+            }
+        }
+    }
+    // a fringe that ripples with the beat
+    for x in x0..x0 + 24 {
+        if (x + wave as i32) % 2 == 0 {
+            s.plot(x, y0 + 23);
+        }
+    }
+    s.cells(col, row, 3, 3, at(lord.2 | BR, lord.1));
+    // the pole, in the sky's colours
+    s.ln(x0 - 2, y0 - 4, x0 - 2, y0 + 34);
+    s.ln(x0 - 3, y0 - 1, x0 - 1, y0 - 1);
+}
+
+/// A first-person view across an invented realm on a 16×16 map: plains,
+/// forests, downs, mountains, lakes, keeps and towers seen from where a lord
+/// stands. The view turns to the next compass point on every second beat and
+/// the landmarks slide past; after a full circle the next lord is shown, a
+/// step further on. A text window says who stands where; the lord's banner
+/// comes up on the bass.
+struct Compass {
     scr: Scr,
     clock: Clock,
-    horse: [Spr; 2],
-    banner: [Spr; 2],
-    peaks: Vec<u8>,
-    hills: Vec<u8>,
-    towers: [(i32, i32); 4],
-    keeps: [i32; 3],
+    seed: u32,
+    realm: [u8; (REALM * REALM) as usize],
+    pos: (i32, i32),
+    circle: i64,
+    step: i64,
     dir0: usize,
-    view: i64,
     from: f32,
     to: f32,
     turned_at: f32,
     caption: Vec<String>,
-    riders: f32,
-    sky: f32,
+    flag: f32,
+    moon: f32,
+    seen: Vec<(f32, f32, u8, u32)>,
 }
 
-impl Panorama {
+impl Compass {
     fn new(seed: u32) -> Self {
-        let mut r = Rng::new(seed);
-        let ph: Vec<f32> = (0..8).map(|_| r.range(0.0, TAU)).collect();
-        let k = |x: i32, f: f32| x as f32 * TAU * f / PAN_W as f32;
-        let peaks = (0..PAN_W)
-            .map(|x| {
-                let ridge = 1.0 - (k(x, 7.0) + ph[0]).sin().abs();
-                let ridge2 = 1.0 - (k(x, 17.0) + ph[2]).sin().abs();
-                let h = 10.0 + 26.0 * ridge.powi(3) + 8.0 * (k(x, 3.0) + ph[1]).sin() + 9.0 * ridge2.powi(2) + 2.0 * (k(x, 41.0) + ph[3]).sin();
-                h.clamp(4.0, 46.0) as u8
-            })
-            .collect();
-        let hills = (0..PAN_W).map(|x| (5.0 + 3.0 * (k(x, 11.0) + ph[4]).sin() + 2.0 * (k(x, 27.0) + ph[5]).sin()).max(0.0) as u8).collect();
-        let base = r.below(PAN_W as u32) as i32;
-        Panorama {
+        let mut r = Rng::new(seed ^ 0xC0A5);
+        let mut realm = [PLAINS; (REALM * REALM) as usize];
+        for v in realm.iter_mut() {
+            *v = match r.below(100) {
+                0..=45 => PLAINS,
+                46..=63 => FOREST,
+                64..=75 => DOWNS,
+                76..=86 => PEAKS,
+                87..=90 => LAKE,
+                _ => PLAINS,
+            };
+        }
+        for kind in [KEEP, KEEP, KEEP, KEEP, KEEP, TOWER, TOWER, TOWER, TOWER, TOWER] {
+            realm[r.below((REALM * REALM) as u32) as usize] = kind;
+        }
+        let mut pos = (r.below(16) as i32, r.below(16) as i32);
+        for _ in 0..256 {
+            if matches!(realm[(pos.1 * REALM + pos.0) as usize], PLAINS | FOREST | DOWNS) {
+                break;
+            }
+            pos = ((pos.0 + 1) % REALM, (pos.1 + (pos.0 == REALM - 1) as i32) % REALM);
+        }
+        Compass {
             scr: Scr::new(),
             clock: Clock::default(),
-            horse: [spr(&art::RIDER), spr(&art::RIDER_B)],
-            banner: [spr(&art::BANNER), spr(&art::BANNER_B)],
-            peaks,
-            hills,
-            towers: [(base + 140, 46), ((base + 900) % PAN_W, 38), ((base + 1500) % PAN_W, 52), ((base + 1830) % PAN_W, 30)],
-            keeps: [(base + 560) % PAN_W, (base + 1250) % PAN_W, (base + 330) % PAN_W],
+            seed,
+            realm,
+            pos,
+            circle: 0,
+            step: i64::MIN,
             dir0: r.below(8) as usize,
-            view: i64::MIN,
             from: 0.0,
             to: 0.0,
             turned_at: -99.0,
             caption: Vec::new(),
-            riders: r.range(0.0, 400.0),
-            sky: 0.0,
+            flag: 0.0,
+            moon: r.range(0.0, 360.0),
+            seen: Vec::with_capacity(96),
         }
     }
 
-    /// Screen x of world column `wx` for the current view offset, if visible.
-    fn sx(wx: i32, off: i32, half: i32) -> Option<i32> {
-        let x = (wx - off).rem_euclid(PAN_W);
-        if x < 256 + half {
-            Some(x)
-        } else if x > PAN_W - half {
-            Some(x - PAN_W)
-        } else {
-            None
+    fn land(&self, x: i32, y: i32) -> u8 {
+        self.realm[(y.rem_euclid(REALM) * REALM + x.rem_euclid(REALM)) as usize]
+    }
+
+    fn region(x: i32, y: i32) -> &'static str {
+        REGIONS[(y.rem_euclid(REALM) / 4 * 4 + x.rem_euclid(REALM) / 4) as usize]
+    }
+
+    /// The next lord stands a step away, never on a mountain or in a lake.
+    fn walk(&mut self, circle: i64) {
+        let h = hash(self.seed ^ (circle as u32).wrapping_mul(0x2545_F491));
+        for k in 0..8 {
+            let d = (h as usize + k) % 8;
+            let (dx, dy) = [(0, -1), (1, -1), (1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0), (-1, -1)][d];
+            let (x, y) = (self.pos.0 + dx, self.pos.1 + dy);
+            if !matches!(self.land(x, y), PEAKS | LAKE) {
+                self.pos = (x.rem_euclid(REALM), y.rem_euclid(REALM));
+                return;
+            }
         }
+    }
+
+    /// The landmarks in view, far to near: (distance, screen x, kind, id).
+    fn look(&mut self, view: f32) {
+        let (sn, cs) = view.to_radians().sin_cos();
+        self.seen.clear();
+        for dy in -6..=6 {
+            for dx in -6..=6 {
+                let kind = self.land(self.pos.0 + dx, self.pos.1 + dy);
+                if kind == PLAINS || (dx == 0 && dy == 0) {
+                    continue;
+                }
+                let (fx, fy) = (dx as f32, dy as f32);
+                let f = fx * sn - fy * cs;
+                let side = fx * cs + fy * sn;
+                if f < 0.7 || (side / f).abs() > 1.3 || fx.hypot(fy) > 6.5 {
+                    continue;
+                }
+                let id = ((self.pos.1 + dy).rem_euclid(REALM) * REALM + (self.pos.0 + dx).rem_euclid(REALM)) as u32;
+                self.seen.push((f, 128.0 + side / f * FOCAL, kind, id));
+            }
+        }
+        self.seen.sort_by(|a, b| b.0.total_cmp(&a.0));
+    }
+
+    fn describe(&mut self, dir: usize, odd: bool) {
+        let lord = LORDS[self.circle.rem_euclid(5) as usize].0;
+        let place = Self::region(self.pos.0, self.pos.1);
+        let at = match self.land(self.pos.0, self.pos.1) {
+            FOREST => "IN THE FOREST OF",
+            DOWNS => "ON THE DOWNS OF",
+            KEEP => "AT THE KEEP OF",
+            TOWER => "AT THE TOWER OF",
+            _ => "ON THE PLAINS OF",
+        };
+        let mut text = format!("{lord} STANDS {at} {place}, LOOKING {}.", DIRS[dir]);
+        if odd {
+            // name a keep or tower straight ahead, if one is near
+            self.look(dir as f32 * 45.0);
+            let ahead = self.seen.iter().rev().find(|o| matches!(o.2, KEEP | TOWER) && (o.1 - 128.0).abs() < 50.0 && o.0 < 4.5);
+            if let Some(&(_, _, kind, id)) = ahead {
+                let what = if kind == KEEP { "KEEP" } else { "TOWER" };
+                let alt = format!("{lord} LOOKS {}. THE {what} OF {} LIES AHEAD.", DIRS[dir], Self::region(id as i32 % REALM, id as i32 / REALM));
+                if wrap(&alt, 32).len() <= 3 {
+                    text = alt;
+                }
+            }
+        }
+        self.caption = wrap(&text, 32);
     }
 }
 
-impl Effect for Panorama {
+impl Effect for Compass {
     fn draw(&mut self, fb: &mut Fb, c: &Ctx) {
         let a = c.a;
         let (bt, _) = self.clock.tick(c);
-        let view = (bt / 8.0).floor() as i64;
-        if view != self.view {
-            let dir = (view.rem_euclid(8) as usize + self.dir0) % 8;
-            let first = self.view == i64::MIN;
-            self.from = if first { dir as f32 * 256.0 } else { self.to };
-            self.to = dir as f32 * 256.0;
-            if self.to < self.from - 1024.0 {
-                self.to += PAN_W as f32;
+        let step = (bt / 2.0).floor() as i64;
+        if step != self.step {
+            let first = self.step == i64::MIN;
+            let circle = step.div_euclid(8);
+            if !first && circle != self.circle {
+                self.walk(circle);
             }
-            self.turned_at = if first { bt - 2.0 } else { bt };
-            self.view = view;
-            let plain = PLAINS[((view.rem_euclid(64) / 8) as usize + self.dir0) % 8];
-            let text = if view.rem_euclid(2) == 0 {
-                format!("YOU STAND ON THE PLAIN OF {plain}, LOOKING {}.", DIRS[dir])
-            } else {
-                format!("DU STÅR PÅ SLÄTTEN VID {plain} OCH BLICKAR MOT {}.", DIRS_SV[dir])
-            };
-            self.caption = wrap(&text, 32);
+            self.circle = circle;
+            let dir = (self.dir0 + step.rem_euclid(8) as usize) % 8;
+            let ang = dir as f32 * 45.0;
+            self.from = if first { ang } else { self.to.rem_euclid(360.0) };
+            self.to = if ang < self.from { ang + 360.0 } else { ang };
+            self.turned_at = if first { bt - 1.0 } else { bt };
+            self.step = step;
+            self.describe(dir, step.rem_euclid(2) == 1);
         }
-        let k = smoothstep((bt - self.turned_at).clamp(0.0, 1.0));
-        let off = lerp(self.from, self.to, k) as i32;
-        self.sky += (a.bass + a.mid * 0.5 - self.sky) * (1.0 - (-c.dt * 1.5).exp());
-        self.riders += c.dt * (18.0 + 70.0 * a.bass);
+        let view = lerp(self.from, self.to, smoothstep(((bt - self.turned_at) / 0.7).clamp(0.0, 1.0)));
+        self.flag = (self.flag - c.dt * 1.2).max(a.bass);
+        let screen_x = |w: f32| -> Option<f32> {
+            let d = turn_to(w, view);
+            (d.abs() < 55.0).then(|| 128.0 + d.to_radians().tan() * FOCAL)
+        };
 
+        self.look(view);
         let s = &mut self.scr;
-        // sky colours follow the music: night, blue hour, dawn
-        let lvl = (self.sky * 2.6) as usize;
-        let (top, low) = [(BLACK, BLUE), (BLUE, MAGENTA), (BLUE, CYAN), (MAGENTA, RED)][lvl.min(3)];
-        s.clear(at(WHITE, top));
-        let mink = if low == CYAN { BLUE } else { WHITE };
-        s.cells(0, 4, 32, 6, at(mink | BR, low));
-        s.cells(0, 10, 32, 4, at(BLACK, GREEN));
-        s.cells(0, 14, 32, 8, at(BLACK, GREEN | BR));
-        s.cells(0, 22, 32, 2, at(YELLOW | BR, BLACK));
+        s.clear(at(BLACK, GREEN));
+        s.cells(0, 0, 32, 6, at(WHITE | BR, BLUE));
+        s.cells(0, 6, 32, 6, at(BLACK, CYAN));
+        s.cells(0, 16, 32, 5, at(BLACK, GREEN | BR));
+        // stars and the moon stay put in the world while the view turns
+        let twinkle = (c.t * (2.0 + a.treble * 12.0)) as u32;
         for i in 0..70u32 {
-            let h = hash(i * 7919 + 1);
-            let wx = (h % PAN_W as u32) as i32;
-            if let Some(x) = Self::sx(wx, off, 0) {
-                let y = ((h >> 12) % 40) as i32;
-                if (h >> 24) % 4 != 0 || a.treble > 0.5 {
-                    s.plot(x, y);
+            let h = hash((i * 7919).wrapping_add(self.seed));
+            if let Some(x) = screen_x((h % 3600) as f32 / 10.0) {
+                if hash(h ^ twinkle) % 5 != 0 {
+                    s.plot(x as i32, ((h >> 12) % 44) as i32);
                 }
             }
         }
-        if let Some(x) = Self::sx(self.towers[0].0 + 300, off, 12) {
-            s.oval(x as f32, 18.0, 7.0, 7.0, |_, _| true);
-            s.oval(x as f32 + 3.0, 16.0, 6.0, 6.0, |_, _| false);
-            s.ink(x - 8, 10, 16, 16, YELLOW | BR);
+        if let Some(x) = screen_x(self.moon) {
+            s.oval(x, 18.0, 7.0, 7.0, |_, _| true);
+            s.oval(x + 3.0, 16.0, 6.0, 6.0, |_, _| false);
         }
-        // the far mountains
+        // far hills all round the horizon
         for x in 0..SW {
-            let wx = (x + off).rem_euclid(PAN_W) as usize;
-            let top = 80 - self.peaks[wx] as i32;
-            for y in top..80 {
-                let d = y - top;
-                let on = if d < 3 { true } else if d < 9 { (x + y) % 2 == 0 } else { x % 2 == 0 && y % 2 == 0 };
-                s.set(x, y, on);
+            let w = view + ((x as f32 - 128.0) / FOCAL).atan().to_degrees();
+            let r = w.to_radians();
+            let h = 4.0 + 3.0 * (r * 3.0 + self.seed as f32).sin() + 2.0 * (r * 7.0).sin();
+            for y in (HORIZON - h) as i32..HORIZON as i32 {
+                s.set(x, y, (x + y) % 2 == 0 || y > (HORIZON - h) as i32 + 1);
             }
         }
-        // a forest band on the green, and grass tufts on the near plain
-        for x in 0..SW {
-            let wx = (x + off).rem_euclid(PAN_W);
-            let h = self.hills[wx as usize] as i32;
-            let tree = (hash((wx / 5) as u32) % 3) as i32;
-            for y in 80..84 + h + tree {
-                if y < 84 + h - 2 || (x + y) % 2 == 0 {
-                    s.plot(x, y);
-                }
-            }
-            if hash((wx as u32).wrapping_mul(31)) % 9 == 0 {
-                let y = 116 + (hash(wx as u32) % 56) as i32;
-                s.plot(x, y);
-                s.plot(x - 1, y - 1);
-                s.plot(x + 1, y - 1);
+        // grass tufts on the near ground
+        for i in 0..40u32 {
+            let h = hash((i * 2654 + 77).wrapping_add(self.seed));
+            let f = 0.8 + ((h >> 10) % 100) as f32 / 40.0;
+            if let Some(x) = screen_x((h % 360) as f32) {
+                let y = (HORIZON + 44.0 / f) as i32;
+                s.plot(x as i32, y);
+                s.plot(x as i32 - 1, y - 1);
+                s.plot(x as i32 + 1, y - 1);
             }
         }
-        // boulders and bushes on the near plain
-        for i in 0..24u32 {
-            let h = hash(i * 2654 + 77);
-            let wx = (h % PAN_W as u32) as i32;
-            if let Some(x) = Self::sx(wx, off, 12) {
-                let y = 118.0 + ((h >> 11) % 50) as f32;
-                let r = 3.0 + (y - 118.0) / 12.0;
-                if (h >> 20) % 2 == 0 {
-                    s.oval(x as f32, y, r * 1.4, r, |px, py| (px + py) % 3 != 0);
-                } else {
-                    for k in 0..5 {
-                        let ang = PI + k as f32 * PI / 4.0;
-                        s.line((x as f32, y), (x as f32 + ang.cos() * r * 1.6, y + ang.sin() * r * 1.6), false);
-                    }
-                }
-            }
+        for &(f, x, kind, id) in &self.seen {
+            landmark(s, kind, x, (HORIZON + 58.0 / f).min(166.0), 38.0 / f, bt, id);
         }
-        // towers and keeps on the skyline
-        for &(wx, h) in &self.towers {
-            if let Some(x) = Self::sx(wx, off, 12) {
-                let base = 96;
-                s.rect(x - 5, base - h, 10, h, |_, _| true);
-                s.poly(&[(x as f32 - 7.0, (base - h) as f32), (x as f32, (base - h - 14) as f32), (x as f32 + 7.0, (base - h) as f32)], false, |_, _| true);
-                s.rect(x - 1, base - h + 8, 2, 4, |_, _| false);
-                s.rect(x - 1, base - h + 22, 2, 4, |_, _| false);
-                let wave = if (bt * 2.0) as i32 % 2 == 0 { 1 } else { 0 };
-                s.ln(x, base - h - 14, x, base - h - 22);
-                s.rect(x + 1, base - h - 22 + wave, 5, 3, |_, _| true);
-                s.tint(x - 7, base - h - 22, 14, h + 22, BLACK);
-            }
+        if self.flag > 0.45 {
+            banner(s, 2, 1, LORDS[self.circle.rem_euclid(5) as usize], (bt * 2.0) as i32 % 2 == 0);
         }
-        for &wx in &self.keeps {
-            if let Some(x) = Self::sx(wx, off, 30) {
-                let base = 100;
-                s.rect(x - 22, base - 22, 44, 22, |_, _| true);
-                for t in [-22, 14] {
-                    s.rect(x + t, base - 36, 8, 36, |_, _| true);
-                    for m in 0..3 {
-                        s.rect(x + t + m * 3, base - 39, 2, 3, |_, _| true);
-                    }
-                }
-                for m in 0..7 {
-                    s.rect(x - 14 + m * 4, base - 25, 2, 3, |_, _| true);
-                }
-                s.rect(x - 4, base - 12, 8, 12, |_, _| false);
-                s.oval(x as f32, (base - 12) as f32, 4.0, 3.0, |_, _| false);
-                s.rect(x - 19, base - 30, 2, 3, |_, _| false);
-                s.rect(x + 17, base - 30, 2, 3, |_, _| false);
-                s.tint(x - 22, base - 39, 44, 39, BLACK);
-            }
-        }
-        // the column of riders
-        let banners = [RED | BR, BLUE | BR, MAGENTA | BR, WHITE | BR, YELLOW | BR];
-        for i in 0..5 {
-            let x = (self.riders - i as f32 * 30.0).rem_euclid(420.0) as i32 - 40;
-            let gallop = (x / 6).rem_euclid(2) as usize;
-            let bob = if gallop == 1 { 1 } else { 0 };
-            s.draw(&self.horse[gallop], x, 144 + bob, false);
-            s.tint(x, 144, 16, 16, BLACK);
-            s.draw(&self.banner[((bt * 2.0) as usize + i) % 2], x, 136 + bob, false);
-            s.ink(x, 136, 16, 7, banners[i]);
-        }
-        // the caption types itself after every turn
-        s.clear_rows(22, 24);
-        let mut left = ((bt - self.turned_at) * 24.0).max(0.0) as usize;
-        for (i, line) in self.caption.iter().take(2).enumerate() {
+        // the text window types itself after every turn
+        s.clear_rows(21, 24);
+        s.cells(0, 21, 32, 3, at(YELLOW | BR, BLACK));
+        let mut left = ((bt - self.turned_at) * 80.0).max(0.0) as usize;
+        for (i, line) in self.caption.iter().take(3).enumerate() {
             let n = line.chars().count();
             let show = left.min(n);
             let part: &str = match line.char_indices().nth(show) {
                 Some((b, _)) => &line[..b],
                 None => line,
             };
-            s.print(0, 22 + i as i32, part, None);
+            s.print(0, 21 + i as i32, part, None);
             left -= show;
         }
         let bc = zx(BLACK);
