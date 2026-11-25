@@ -1473,7 +1473,7 @@ impl Effect for Voronoi {
                     by + fsin(self.tt * m[1] + m[3]) * VCELL as f32 * 0.4,
                 );
                 // a different handful of cells flashes on every beat
-                let lit = (k as u32 * 2_654_435_761u32).wrapping_add(c.beats.wrapping_mul(0x9E37_79B9)) >> 29 == 0;
+                let lit = (k as u32).wrapping_mul(2_654_435_761).wrapping_add(c.beats.wrapping_mul(0x9E37_79B9)) >> 29 == 0;
                 let hue = fract(k as f32 * 0.618 + self.off);
                 self.cell_col[k] = match self.kind {
                     0 => scale(pal.at(hue), 0.55 + if lit { a.pulse * 0.9 } else { 0.0 }),

@@ -2269,12 +2269,12 @@ fn ufo_picture(seed: u32) -> Scr {
     let mut x0: i32 = -4;
     let mut tops = [119i32; 256];
     while x0 < 260 {
-        let h = 8 + (hash(x0 as u32 * 7 + seed) % 15) as i32;
+        let h = 8 + (hash((x0 as u32).wrapping_mul(7).wrapping_add(seed)) % 15) as i32;
         for x in (x0 - 12).max(0)..(x0 + 12).min(256) {
             let t = 119 - (h as f32 - (x - x0).abs() as f32 * 2.2).max(0.0) as i32;
             tops[x as usize] = tops[x as usize].min(t);
         }
-        x0 += 6 + (hash(x0 as u32 + 99) % 6) as i32;
+        x0 += 6 + (hash((x0 as u32).wrapping_add(99)) % 6) as i32;
     }
     for x in 0..256 {
         for y in tops[x as usize].min(112)..120 {
@@ -2775,7 +2775,7 @@ impl Adventure {
                 let mut y = 16;
                 let mut on = false;
                 while y < 48 {
-                    let w = 1 + (hash(seed + y as u32) % 4) as i32;
+                    let w = 1 + (hash(seed.wrapping_add(y as u32)) % 4) as i32;
                     if on {
                         s.rect(96, y, 64, w.min(48 - y), |_, _| true);
                     }
@@ -3682,7 +3682,7 @@ impl Effect for Panorama {
                     s.plot(x, y);
                 }
             }
-            if hash(wx as u32 * 31) % 9 == 0 {
+            if hash((wx as u32).wrapping_mul(31)) % 9 == 0 {
                 let y = 116 + (hash(wx as u32) % 56) as i32;
                 s.plot(x, y);
                 s.plot(x - 1, y - 1);

@@ -427,7 +427,7 @@ pub fn tex_planet(pal: &Palette, arg: u32) -> Tex {
                 if lat > 0.8 - n * 0.15 {
                     c = ice;
                 }
-                let cl = contrast(fbm(fx, fy, 8, 4, seed + 5), 2.2);
+                let cl = contrast(fbm(fx, fy, 8, 4, seed.wrapping_add(5)), 2.2);
                 if cl > 0.6 { mix(c, rgb(240, 245, 255), ((cl - 0.6) * 3.0).min(0.85)) } else { c }
             }
             1 => {
@@ -768,7 +768,7 @@ impl Planes {
         let g = (f + 1 + r.below(3) as usize) % 4;
         Planes {
             floor: PalTex::new(PATTERNS[f], seed),
-            ceil: PalTex::new(PATTERNS[g], seed + 1),
+            ceil: PalTex::new(PATTERNS[g], seed.wrapping_add(1)),
             cam: (0.0, 0.0),
             yaw: 0.0,
             turn: [0.0, 0.15, -0.15][r.below(3) as usize],
@@ -1081,8 +1081,8 @@ fn relief(kind: u32, seed: u32) -> Vec<f32> {
                         for i in -1..=1 {
                             let (gx, gy) = ((cx + i) & 7, (cy + j) & 7);
                             let px = gx as f32 * 32.0 + 8.0 + hash(gx, gy, seed) * 16.0;
-                            let py = gy as f32 * 32.0 + 8.0 + hash(gx, gy, seed + 1) * 16.0;
-                            let rr = 10.0 + hash(gx, gy, seed + 2) * 10.0;
+                            let py = gy as f32 * 32.0 + 8.0 + hash(gx, gy, seed.wrapping_add(1)) * 16.0;
+                            let rr = 10.0 + hash(gx, gy, seed.wrapping_add(2)) * 10.0;
                             let (dx, dy) = (wrap(fx - px), wrap(fy - py));
                             let q = 1.0 - (dx * dx + dy * dy) / (rr * rr);
                             if q > 0.0 {
@@ -1206,7 +1206,7 @@ impl Lens {
                 [r.range(rad, WF - rad), r.range(rad, HF - rad), vx, 0.0, rad]
             })
             .collect();
-        Lens { pic: PalTex::new(tex_picture, seed * 2), balls, mag: r.range(0.45, 0.62), pan: 0.0, utab: vec![0; W] }
+        Lens { pic: PalTex::new(tex_picture, seed.wrapping_mul(2)), balls, mag: r.range(0.45, 0.62), pan: 0.0, utab: vec![0; W] }
     }
 }
 
@@ -1623,7 +1623,7 @@ impl Flag {
     fn new(seed: u32) -> Self {
         let mut r = Rng::new(seed);
         let tex = if r.below(2) == 0 {
-            PalTex::new(tex_picture, seed * 2 + 1)
+            PalTex::new(tex_picture, seed.wrapping_mul(2).wrapping_add(1))
         } else {
             PalTex::new(pick_pattern(&mut r), seed)
         };
@@ -1725,7 +1725,7 @@ impl Droste {
             }
         }
         Droste {
-            pic: PalTex::new(tex_picture, seed * 2 + 1),
+            pic: PalTex::new(tex_picture, seed.wrapping_mul(2).wrapping_add(1)),
             rho,
             theta,
             ln_s,
