@@ -8,7 +8,7 @@ import { Radio, DECADES, GENRES, DEFAULT_DECADE, DEFAULT_GENRE } from './radio.j
 import * as lastfm from './lastfm.js';
 import { createGuide, audioKind, setAudioKind, canShare, songs } from './guide.js';
 import { initPlaylists } from './playlists.js';
-import { initEggs } from './eggs.js';
+import { initEggs, christmasWeek } from './eggs.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('c');
@@ -269,9 +269,13 @@ function scheduleHint(ms) {
   }, ms);
 }
 
+let christmasShown = false;
 function start() {
   // restart the chosen demo so its title card shows
   if (panel.style.display !== 'none' && !paused) ex.ufo_set_demo(demo, ex.ufo_current_demo(demo));
+  // from 23 to 28 December, the first start of the evening opens with the Christmas scene
+  if (!christmasShown && christmasWeek(new Date())) ex.ufo_christmas(demo);
+  christmasShown = true;
   panel.style.display = 'none';
   document.body.classList.add('running');
   setPaused(false);
@@ -421,6 +425,7 @@ window.ufo.egg = initEggs({
   snow: (on) => ex.ufo_set_snow(demo, on ? 1 : 0),
   isRunning: () => panel.style.display === 'none' && !guide?.isOpen(),
 });
+window.ufo.christmas = () => ex.ufo_christmas(demo); // to see the Christmas scene any day
 // A phone has no P key: on a touch screen a tap on the running demo opens the settings and a
 // double tap goes fullscreen. The tap waits a moment, so a double tap doesn't open them as well.
 let touchTap = false;

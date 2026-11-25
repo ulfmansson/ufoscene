@@ -70,6 +70,12 @@ pub extern "C" fn ufo_egg(d: *mut Demo, kind: u32, arg: u32) {
     unsafe { (*d).egg(kind, arg) }
 }
 
+/// Open the show with the Christmas scene, then carry on with the current demo.
+#[unsafe(no_mangle)]
+pub extern "C" fn ufo_christmas(d: *mut Demo) {
+    unsafe { (*d).christmas_first() }
+}
+
 /// Snow over the demos on (1) or off (0).
 #[unsafe(no_mangle)]
 pub extern "C" fn ufo_set_snow(d: *mut Demo, on: u32) {

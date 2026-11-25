@@ -170,6 +170,10 @@ There are a few. No spoilers, only hints:
 - The browser console has something to say to sceners.
 - And sometimes something just flies by on its own.
 
+Not a secret: from 23 to 28 December the show opens with a Swedish Christmas night, a red
+cottage with candles in the windows, a straw goat and a tree that blinks to the music, before
+the demos start. (Can't wait? `ufo.christmas()` in the browser console shows it any day.)
+
 Found one? Tell people with **#ufoscene**. Ideas for more are welcome (see
 [CONTRIBUTING.md](CONTRIBUTING.md)).
 

@@ -63,6 +63,9 @@ pub struct Demo {
     fx_idx: usize,
     pal_idx: usize,
     in_image_part: bool,
+    /// A seasonal scene opens the show before the demo's first part (`christmas_first`).
+    intro: bool,
+    christmas_fx: Option<usize>,
     t: f32,
     last: Option<f32>,
     start: Option<f32>,
@@ -116,9 +119,12 @@ fn top_logo(name: &str) -> Logo {
 
 impl Demo {
     pub fn new() -> Self {
-        let defs = fx::all();
+        let mut defs = fx::all();
         let recipes = recipes::build(&defs);
         let image_fx = (0..defs.len()).filter(|&i| defs[i].flags & fx::IMAGE != 0).collect();
+        // seasonal scenes go after the recipes are built, so they never end up in a demo
+        defs.extend(fx::seasonal());
+        let christmas_fx = defs.iter().position(|d| d.name == "GOD JUL");
         let list = recipes
             .iter()
             .map(|r| {
@@ -140,6 +146,8 @@ impl Demo {
             fx_idx: 0,
             pal_idx: 0,
             in_image_part: false,
+            intro: false,
+            christmas_fx,
             t: 0.0,
             last: None,
             start: None,
@@ -193,7 +201,17 @@ impl Demo {
         self.float_logo = Logo::new(r.name, (150 / font::text_width(r.name, 1, true).max(1)).clamp(1, 3));
         self.scroll = Scroller::new(&self.scroll_text());
         self.demo_t0 = self.t;
+        self.intro = false;
         self.start_part(0);
+    }
+
+    /// Open with the Christmas scene (the page asks for it from 23 to 28 December); the
+    /// current demo starts, with its title card, when the scene is over.
+    pub fn christmas_first(&mut self) {
+        let Some(idx) = self.christmas_fx else { return };
+        self.begin(idx, 1, self.pal_idx);
+        self.intro = true;
+        self.in_image_part = false;
     }
 
     pub fn next_demo(&mut self) {
@@ -243,6 +261,12 @@ impl Demo {
         let running = self.t - self.start.unwrap_or(self.t);
         if running > 120.0 && self.eggs.active(self.t).is_none() && self.rng.below(36) == 0 {
             self.eggs.start(eggs::FLYBY, 0, self.t);
+        }
+        if self.intro {
+            self.intro = false;
+            self.demo_t0 = self.t;
+            self.start_part(0);
+            return;
         }
         let has_image = self.image.is_some() && !self.image_fx.is_empty();
         if has_image && !self.in_image_part && (self.image_due || self.parts_since_image >= 3) {
@@ -326,7 +350,13 @@ impl Demo {
         let st = t - self.part_t0;
         let sb = self.audio.beats.wrapping_sub(self.part_beat0);
         // picture parts are shorter; normal parts last 12 s and 32 beats, at most 45 s
-        let (min_t, max_t) = if self.in_image_part { (8.0, 20.0) } else { (12.0, 45.0) };
+        let (min_t, max_t) = if self.intro {
+            (24.0, 60.0)
+        } else if self.in_image_part {
+            (8.0, 20.0)
+        } else {
+            (12.0, 45.0)
+        };
         if (self.audio.beat && st > min_t && sb >= 32) || st > max_t || (self.in_image_part && st > min_t && self.audio.beat && sb >= 16) {
             self.next_part();
         }
@@ -352,7 +382,7 @@ impl Demo {
             self.overlays(flags);
         }
         let dtime = t - self.demo_t0;
-        if dtime < 5.0 && self.part == 0 && !self.in_image_part {
+        if dtime < 5.0 && self.part == 0 && !self.in_image_part && !self.intro {
             self.title_card(dtime);
         }
         let playing = self.track.is_some() && !self.in_image_part && self.now_playing(t - self.track_t);
@@ -561,7 +591,11 @@ impl Demo {
         let r = &self.recipes[self.demo];
         let mode = if a.autopilot { "AUTOPILOT" } else { "LIVE" };
         let jb = ["NEXT", "REPEAT", "SHUFFLE"][self.jukebox as usize % 3];
-        let part = if self.in_image_part { "PICTURE".to_string() } else { format!("PART {}/{}", self.part + 1, r.parts.len()) };
+        let part = if self.in_image_part {
+            "PICTURE".to_string()
+        } else if self.intro {
+            "INTRO".to_string()
+        } else { format!("PART {}/{}", self.part + 1, r.parts.len()) };
         let l1 = format!("DEMO {}/{} {} BY {}", self.demo + 1, self.recipes.len(), r.name, r.group);
         let l2 = format!("{part} {}  {}  {} BPM  {mode}  THEN {jb}", self.defs[self.fx_idx].name, fx::PALETTE_NAMES[self.pal_idx], (60.0 / a.period).round());
         for (i, s) in [l1, l2].iter().enumerate() {
@@ -597,6 +631,25 @@ mod tests {
             d.frame(*t, false);
             *t += 1.0 / 60.0;
         }
+    }
+
+    #[test]
+    fn christmas_opens_the_show_then_the_demo_starts() {
+        let mut d = Demo::new();
+        let mut t = 10.0;
+        d.set_demo(41);
+        d.christmas_first();
+        run(&mut d, &mut t, 1.0);
+        assert_eq!(d.state(), (41, 0, "GOD JUL", false));
+        let t0 = t;
+        while d.state().2 == "GOD JUL" && t < t0 + 70.0 {
+            run(&mut d, &mut t, 0.1);
+        }
+        let (demo, part, name, _) = d.state();
+        assert!(t - t0 >= 23.0, "the Christmas scene plays for a while, not {} s", t - t0);
+        assert_ne!(name, "GOD JUL", "it ends within a minute");
+        assert_eq!((demo, part), (41, 0), "then the chosen demo starts from its first part");
+        assert!(d.recipes.iter().all(|r| r.parts.iter().all(|p| d.defs[p.0].name != "GOD JUL")), "never inside a demo");
     }
 
     #[test]

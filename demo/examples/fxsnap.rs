@@ -20,7 +20,7 @@ fn main() {
     let secs: f32 = args.next().and_then(|s| s.parse().ok()).unwrap_or(3.0);
     let seed: u32 = args.next().and_then(|s| s.parse().ok()).unwrap_or(1);
     fs::create_dir_all(&out).expect("create output dir");
-    let defs: Vec<_> = fx::all().into_iter().filter(|d| d.name.contains(&filter)).collect();
+    let defs: Vec<_> = fx::all().into_iter().chain(fx::seasonal()).filter(|d| d.name.contains(&filter)).collect();
     let cols = 4;
     let (tw, th) = (W / 2, H / 2);
     let rows = defs.len().div_ceil(cols).max(1);

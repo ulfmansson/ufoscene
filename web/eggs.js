@@ -29,6 +29,9 @@ export function dayEgg(d) {
   return null;
 }
 
+/** From 23 to 28 December the show opens with the Christmas scene. */
+export const christmasWeek = (d) => d.getMonth() === 11 && d.getDate() >= 23 && d.getDate() <= 28;
+
 /** Snow from 1 December to Twelfth Night (6 January). */
 export const snowy = (d) => d.getMonth() === 11 || (d.getMonth() === 0 && d.getDate() <= 6);
 

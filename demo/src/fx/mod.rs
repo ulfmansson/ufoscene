@@ -5,6 +5,7 @@
 //! Effects are listed in [`all`]. A demo (see `crate::demos`) is a sequence of
 //! effects plus a palette, a logo, a scroll text and a transition style.
 
+pub mod christmas;
 pub mod classic;
 pub mod deform;
 pub mod image;
@@ -97,6 +98,12 @@ pub fn all() -> Vec<Def> {
     zxgames::register(&mut v);
     image::register(&mut v);
     v
+}
+
+/// Scenes for special days, kept out of `all()` so the 100 demos never change.
+/// The demo player adds them after the recipes are built.
+pub fn seasonal() -> Vec<Def> {
+    vec![christmas::def()]
 }
 
 // ---------------------------------------------------------------- palettes
@@ -374,7 +381,7 @@ mod tests {
     /// no panics, something visible, and (in release builds) fast enough.
     #[test]
     fn every_effect_renders() {
-        let defs = all();
+        let defs: Vec<Def> = all().into_iter().chain(seasonal()).collect();
         let mut names = std::collections::HashSet::new();
         for d in &defs {
             assert!(names.insert(d.name), "duplicate effect name {}", d.name);
