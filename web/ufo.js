@@ -257,13 +257,14 @@ function setPaused(on) {
 }
 
 // Now and then, while a demo runs: where the settings are.
+const touchScreen = matchMedia('(pointer: coarse)').matches;
 let hintTimer = null;
 function scheduleHint(ms) {
   clearTimeout(hintTimer);
   hintTimer = setTimeout(() => {
     // never over another message (a station or song name): try again a little later
     if (toast.style.opacity === '1') return scheduleHint(10000);
-    if (panel.style.display === 'none' && !guide?.isOpen()) say('Press P for settings · G for the setup guide', 4000);
+    if (panel.style.display === 'none' && !guide?.isOpen()) say(touchScreen ? 'Tap the screen for settings' : 'Press P for settings · G for the setup guide', 4000);
     scheduleHint(4 * 60 * 1000);
   }, ms);
 }
@@ -420,7 +421,27 @@ window.ufo.egg = initEggs({
   snow: (on) => ex.ufo_set_snow(demo, on ? 1 : 0),
   isRunning: () => panel.style.display === 'none' && !guide?.isOpen(),
 });
-canvas.addEventListener('dblclick', () => document.documentElement.requestFullscreen());
+// A phone has no P key: on a touch screen a tap on the running demo opens the settings and a
+// double tap goes fullscreen. The tap waits a moment, so a double tap doesn't open them as well.
+let touchTap = false;
+let tapTimer = null;
+canvas.addEventListener('pointerdown', (e) => (touchTap = e.pointerType !== 'mouse'));
+canvas.addEventListener('click', () => {
+  if (!touchTap || panel.style.display !== 'none' || guide?.isOpen()) return;
+  if (tapTimer) {
+    clearTimeout(tapTimer);
+    tapTimer = null;
+    document.documentElement.requestFullscreen?.().catch(() => {});
+    return;
+  }
+  tapTimer = setTimeout(() => {
+    tapTimer = null;
+    if (panel.style.display === 'none') togglePanel();
+  }, 300);
+});
+canvas.addEventListener('dblclick', () => {
+  if (!touchTap) document.documentElement.requestFullscreen();
+});
 window.addEventListener('keydown', (e) => {
   if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement) return;
   const k = e.key.toLowerCase();

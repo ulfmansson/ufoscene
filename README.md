@@ -146,9 +146,12 @@ back into BlackHole, which would loop the sound.
 | **T** | TV mode |
 | **H** | info overlay (demo, part, palette, BPM, levels) |
 | **Q** | a QR code to <https://ufoscene.net> with #ufoscene, for 10 seconds, so guests can open it on their phones |
-| **F** | fullscreen (or double-click) |
+| **F** | fullscreen (or double-click; double-tap on a phone) |
 | **P** / **Esc** | pause everything (demo, radio, Spotify) and show the settings panel; **P** again carries on |
 | **G** | setup guide |
+
+On a phone or tablet there are no keys: tap the running demo to pause it and open the settings,
+and **Start** carries on.
 
 `http://127.0.0.1:8100/#42` opens demo 42.
 
