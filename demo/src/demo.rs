@@ -210,6 +210,11 @@ impl Demo {
         self.set_demo(i as usize);
     }
 
+    /// Seed the random choices (shuffle, the first demo, eggs), so each start is different.
+    pub fn seed(&mut self, seed: u32) {
+        self.rng = Rng::new(seed);
+    }
+
     fn start_part(&mut self, p: usize) {
         let r = &self.recipes[self.demo];
         self.part = p.min(r.parts.len() - 1);

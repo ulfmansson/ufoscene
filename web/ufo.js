@@ -19,6 +19,7 @@ const toast = $('toast');
 const { instance } = await WebAssembly.instantiateStreaming(fetch('ufo.wasm'), {});
 const ex = instance.exports;
 const demo = ex.ufo_new();
+ex.ufo_seed?.(demo, crypto.getRandomValues(new Uint32Array(1))[0]); // a new shuffle each start
 const W = ex.ufo_width();
 const H = ex.ufo_height();
 canvas.width = W;
@@ -74,6 +75,8 @@ juke.onchange = () => {
   localStorage.setItem('ufo.juke', juke.value);
   ex.ufo_set_jukebox(demo, Number(juke.value));
 };
+// with shuffle, a visit without #N in the address starts at a random demo too
+if (!(fromHash >= 1 && fromHash <= demos.length) && juke.value === '2') ex.ufo_random_demo(demo);
 
 // ------------------------------------------------------------------ audio
 

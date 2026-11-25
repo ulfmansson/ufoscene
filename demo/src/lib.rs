@@ -111,6 +111,12 @@ pub extern "C" fn ufo_random_demo(d: *mut Demo) {
     unsafe { (*d).random_demo() }
 }
 
+/// Seed the random choices; the page passes a random number so shuffle differs each time.
+#[unsafe(no_mangle)]
+pub extern "C" fn ufo_seed(d: *mut Demo, seed: u32) {
+    unsafe { (*d).seed(seed) }
+}
+
 /// 0 = next demo when one ends, 1 = repeat it, 2 = shuffle.
 #[unsafe(no_mangle)]
 pub extern "C" fn ufo_set_jukebox(d: *mut Demo, mode: u32) {
