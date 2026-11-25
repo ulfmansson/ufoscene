@@ -5,6 +5,7 @@
 //! Effects are listed in [`all`]. A demo (see `crate::demos`) is a sequence of
 //! effects plus a palette, a logo, a scroll text and a transition style.
 
+pub mod abcgames;
 pub mod christmas;
 pub mod classic;
 pub mod deform;
@@ -96,6 +97,7 @@ pub fn all() -> Vec<Def> {
     vector::register(&mut v);
     oldskool::register(&mut v);
     zxgames::register(&mut v);
+    abcgames::register(&mut v);
     image::register(&mut v);
     v
 }

@@ -47,7 +47,7 @@ const fn at(ink: u8, paper: u8) -> u8 {
 }
 
 #[inline]
-fn hash(mut x: u32) -> u32 {
+pub(super) fn hash(mut x: u32) -> u32 {
     x ^= x >> 16;
     x = x.wrapping_mul(0x7FEB_352D);
     x ^= x >> 15;
@@ -67,14 +67,14 @@ fn accent(pal: &Palette) -> u8 {
 /// Beat position: whole beats from the demo plus our own phase inside the
 /// beat, so movement stays smooth even when the host only counts beats.
 #[derive(Default)]
-struct Clock {
+pub(super) struct Clock {
     last: Option<u32>,
     frac: f32,
 }
 
 impl Clock {
     /// Returns the beat position and whether a new beat started this frame.
-    fn tick(&mut self, c: &Ctx) -> (f32, bool) {
+    pub(super) fn tick(&mut self, c: &Ctx) -> (f32, bool) {
         let first = self.last.is_none();
         let new = self.last != Some(c.beats);
         if new {
