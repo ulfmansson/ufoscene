@@ -76,6 +76,18 @@ pub extern "C" fn ufo_christmas(d: *mut Demo) {
     unsafe { (*d).christmas_first() }
 }
 
+/// Start the half-hour concert; the demos carry on when it is over.
+#[unsafe(no_mangle)]
+pub extern "C" fn ufo_concert(d: *mut Demo) {
+    unsafe { (*d).concert() }
+}
+
+/// Seconds left of the concert, 0 when none is on.
+#[unsafe(no_mangle)]
+pub extern "C" fn ufo_concert_left(d: *mut Demo) -> f32 {
+    unsafe { (*d).concert_left() }
+}
+
 /// Snow over the demos on (1) or off (0).
 #[unsafe(no_mangle)]
 pub extern "C" fn ufo_set_snow(d: *mut Demo, on: u32) {

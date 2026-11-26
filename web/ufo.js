@@ -67,6 +67,8 @@ function markCurrent() {
 }
 const fromHash = parseInt(location.hash.slice(1), 10);
 if (fromHash >= 1 && fromHash <= demos.length) ex.ufo_set_demo(demo, fromHash - 1);
+// #concert in the address: the first Start opens with the concert (see concert() below)
+let concertOnStart = location.hash === '#concert';
 
 const juke = $('juke');
 juke.value = localStorage.getItem('ufo.juke') || '2'; // shuffle unless the visitor chose otherwise
@@ -276,6 +278,11 @@ function start() {
   // from 23 to 28 December, the first start of the evening opens with the Christmas scene
   if (!christmasShown && christmasWeek(new Date())) ex.ufo_christmas(demo);
   christmasShown = true;
+  if (concertOnStart) {
+    concertOnStart = false;
+    ex.ufo_concert(demo);
+    playSetlist();
+  }
   panel.style.display = 'none';
   document.body.classList.add('running');
   setPaused(false);
@@ -291,6 +298,48 @@ function togglePanel() {
 }
 
 $('go').addEventListener('click', start);
+
+// ------------------------------------------------------------------ the concert
+
+// C, the Concert button, #concert in the address or ufo.concert() in the console: half an
+// hour of live concert on a pixel stage (demo/src/fx/concert.rs), then the demos carry on.
+// With Spotify connected (Premium) the setlist in playlists/concert.txt starts in order on
+// the Spotify app, and every new song brings the next act. C again ends the concert.
+const inConcert = () => ex.ufo_concert_left(demo) > 0;
+
+async function playSetlist() {
+  if (!spotify.connected()) {
+    say('Concert on! Put the music on, or connect Spotify (G) to start the setlist from here.', 9000);
+    return;
+  }
+  say('Concert on! Finding the setlist in Spotify…', 5000);
+  try {
+    const text = await (await fetch('playlists/concert.txt')).text();
+    const { name, songs } = spotify.parsePlaylist(text, 'The concert');
+    const hits = (await Promise.all(songs.map((s) => spotify.findTrack(s).catch(() => null)))).filter(Boolean);
+    if (!hits.length) throw new Error('none of its songs were found');
+    await spotify.play(hits.map((h) => h.uri), { shuffle: false });
+    say(`${name}: ${hits.length} songs, in order. Enjoy the show!`, 6000);
+  } catch (e) {
+    if (e.status === 404) say('Open the Spotify app (or open.spotify.com) and play anything once, then press C twice.', 9000);
+    else if (e.status === 403) say('Starting songs from here needs Spotify Premium. Start the music in Spotify yourself.', 9000);
+    else say(`Could not start the setlist (${e.message}).`, 8000);
+  }
+}
+
+function concert() {
+  if (inConcert()) {
+    ex.ufo_set_demo(demo, ex.ufo_current_demo(demo));
+    say('Concert over: back to the demos', 3000);
+    return;
+  }
+  concertOnStart = false; // started here, so Start must not start it again
+  if (panel.style.display !== 'none') start();
+  ex.ufo_concert(demo);
+  playSetlist();
+}
+window.ufo.concert = concert;
+$('concert-go').addEventListener('click', concert);
 
 // Share: the system share sheet where there is one, otherwise copy the link. A page on this
 // computer (127.0.0.1) shares https://ufoscene.net instead, since nobody else can open it.
@@ -354,7 +403,7 @@ async function startRadio() {
       radio = new Radio(ac, (st) => {
         sendTrack(st.name, 'RADIO - SPACE FOR NEXT STATION');
         // a new station brings a new demo: the next one, or a random one with shuffle (J)
-        if (follow.checked) {
+        if (follow.checked && !inConcert()) {
           if (juke.value === '2') ex.ufo_random_demo(demo);
           else ex.ufo_next_demo(demo);
         }
@@ -465,6 +514,7 @@ window.addEventListener('keydown', (e) => {
   } else if (k === 'n') ex.ufo_next_scene(demo);
   else if (k === 'h') ex.ufo_toggle_hud(demo);
   else if (k === 'q') ex.ufo_show_qr(demo);
+  else if (k === 'c') concert();
   else if (k === 't') {
     setTv(!tvmode.checked);
     say(tvmode.checked ? 'TV mode on: steady 30 fps, no scanlines' : 'TV mode off: 60 fps with scanlines', 2500);
@@ -589,8 +639,8 @@ window.ufo.showArtist = (artist, title = '') => {
 let firstSong = true;
 async function songStarted(artist, title, mainArtist, first, album) {
   sendTrack(artist, title);
-  // the first song keeps the demo that is already running
-  if (follow.checked && !firstSong) {
+  // the first song keeps the demo that is already running; the concert keeps its stage
+  if (follow.checked && !firstSong && !inConcert()) {
     if (juke.value === '2') ex.ufo_random_demo(demo);
     else ex.ufo_next_demo(demo);
   }
