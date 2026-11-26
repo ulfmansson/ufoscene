@@ -209,8 +209,11 @@ export function parsePlaylist(text, fallbackName) {
   return { name, songs, public: isPublic, description };
 }
 
-/** `call` is api() here; site/publish-playlists.mjs passes its own for Node. */
-async function findTrack(line, call = api) {
+/**
+ * Look up one playlist line: { uri, label }, or null when Spotify has no such song.
+ * `call` is api() here; site/publish-playlists.mjs passes its own for Node.
+ */
+export async function findTrack(line, call = api) {
   const id = line.match(/(?:track[/:])([A-Za-z0-9]{22})/)?.[1];
   if (id) return { uri: `spotify:track:${id}`, label: line };
   const parts = line.split(/\s+[-–—]\s+/);
@@ -300,9 +303,10 @@ async function isPlaying(deviceId) {
 }
 
 /**
- * Start a playlist on the user's Spotify app or web player (needs Premium and an open
- * Spotify). By default it plays forever: it starts on a random song, shuffles, and starts
- * over when it reaches the end. Pass `{ shuffle: false }` to play it in order, once.
+ * Start a playlist (a `spotify:playlist:` URI) or a list of track URIs on the user's
+ * Spotify app or web player (needs Premium and an open Spotify). By default it plays
+ * forever: it starts on a random song, shuffles, and starts over when it reaches the end.
+ * Pass `{ shuffle: false }` to play it in order, once.
  * Throws if Spotify accepted the request but nothing started playing (status 409).
  */
 export async function play(uri, { shuffle = true } = {}) {
@@ -313,15 +317,14 @@ export async function play(uri, { shuffle = true } = {}) {
     throw e;
   }
   const on = `device_id=${encodeURIComponent(device.id)}`;
-  const body = { context_uri: uri };
-  const n = shuffle ? await playlistSize(uri) : 0;
+  const tracks = Array.isArray(uri);
+  const body = tracks ? { uris: uri } : { context_uri: uri };
+  const n = shuffle ? (tracks ? uri.length : await playlistSize(uri)) : 0;
   if (n > 1) body.offset = { position: Math.floor(Math.random() * n) };
   await api(`/me/player/play?${on}`, { method: 'PUT', body: JSON.stringify(body) });
-  if (shuffle) {
-    // not fatal if a device refuses these
-    await api(`/me/player/shuffle?state=true&${on}`, { method: 'PUT' }).catch(() => {});
-    await api(`/me/player/repeat?state=context&${on}`, { method: 'PUT' }).catch(() => {});
-  }
+  // not fatal if a device refuses these; in order means shuffle and repeat off
+  await api(`/me/player/shuffle?state=${shuffle}&${on}`, { method: 'PUT' }).catch(() => {});
+  await api(`/me/player/repeat?state=${shuffle ? 'context' : 'off'}&${on}`, { method: 'PUT' }).catch(() => {});
   // check that it really plays; a device that went idle may need waking up first
   await sleep(1500);
   if (await isPlaying(device.id)) return;

@@ -155,6 +155,7 @@ back into BlackHole, which would loop the sound.
 | **T** | TV mode |
 | **H** | info overlay (demo, part, palette, BPM, levels) |
 | **Q** | a QR code to <https://ufoscene.net> with #ufoscene, for 10 seconds, so guests can open it on their phones |
+| **C** | the 30-minute pixel concert (below); **C** again ends it |
 | **F** | fullscreen (or double-click; double-tap on a phone) |
 | **P** / **Esc** | pause everything (demo, radio, Spotify) and show the settings panel; **P** again carries on |
 | **G** | setup guide |
@@ -163,6 +164,25 @@ On a phone or tablet there are no keys: tap the running demo to pause it and ope
 and **Start** carries on.
 
 `http://127.0.0.1:8100/#42` opens demo 42.
+
+## The 30-minute concert
+
+Press **C** (or **🎸 Concert** in the panel, or open `http://127.0.0.1:8100/#concert` and press
+Start) for half an hour of live concert on a pixel stage: a four-piece band under a lighting
+truss, an LED wall, speaker stacks and a crowd that jumps, claps and holds up lighters to the
+music. A show clock counts to 30:00, then the demos carry on.
+
+The show runs in acts: the doors open in the dark, then a clap-along, a light show, pyro, a
+disco with a mirror ball, a stadium wave, a guitar solo, a piano ballad and a finale with
+fireworks and confetti, before the band takes a bow. With song names (Spotify, Last.fm or the
+radio) every new song starts the next act, and the artist's photo shows on the LED wall;
+without them the acts change every few minutes. **N** skips to the next act.
+
+With Spotify connected (Premium), the concert starts its setlist on your Spotify app, in order:
+[`web/playlists/concert.txt`](web/playlists/concert.txt), Queen's greatest hits in about 29
+minutes. Swap in any band: one `Artist - Title` per line, and keep it just under 30 minutes so
+the last song ends before the bow. The music reaches UFO the usual way (a tab, BlackHole or the
+microphone), so the band plays along. The band on stage is made up; it plays whatever is on.
 
 ## Easter eggs
 

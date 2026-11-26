@@ -66,6 +66,11 @@ pub struct Demo {
     /// A seasonal scene opens the show before the demo's first part (`christmas_first`).
     intro: bool,
     christmas_fx: Option<usize>,
+    /// The half-hour concert (`concert`) is on; the demos carry on when it ends.
+    in_concert: bool,
+    concert_fx: Option<usize>,
+    /// New songs so far (`set_track`), handed to effects as `Ctx::song`.
+    songs: u32,
     t: f32,
     last: Option<f32>,
     start: Option<f32>,
@@ -125,6 +130,7 @@ impl Demo {
         // seasonal scenes go after the recipes are built, so they never end up in a demo
         defs.extend(fx::seasonal());
         let christmas_fx = defs.iter().position(|d| d.name == "GOD JUL");
+        let concert_fx = defs.iter().position(|d| d.name == "LIVE CONCERT");
         let list = recipes
             .iter()
             .map(|r| {
@@ -148,6 +154,9 @@ impl Demo {
             in_image_part: false,
             intro: false,
             christmas_fx,
+            in_concert: false,
+            concert_fx,
+            songs: 0,
             t: 0.0,
             last: None,
             start: None,
@@ -211,7 +220,24 @@ impl Demo {
         let Some(idx) = self.christmas_fx else { return };
         self.begin(idx, 1, self.pal_idx);
         self.intro = true;
+        self.in_concert = false;
         self.in_image_part = false;
+    }
+
+    /// Start the half-hour concert now (C on the page); when it is over, the current demo
+    /// starts again from its title card. Any other demo or part change ends it early.
+    pub fn concert(&mut self) {
+        let Some(idx) = self.concert_fx else { return };
+        let seed = self.rng.u32();
+        self.begin(idx, seed, self.pal_idx);
+        self.in_concert = true;
+        self.intro = false;
+        self.in_image_part = false;
+    }
+
+    /// Seconds left of the concert, or 0 when none is on.
+    pub fn concert_left(&self) -> f32 {
+        if self.in_concert { (fx::concert::SECONDS - (self.t - self.part_t0)).max(0.0) } else { 0.0 }
     }
 
     pub fn next_demo(&mut self) {
@@ -239,6 +265,7 @@ impl Demo {
         let (idx, seed) = r.parts[self.part];
         self.begin(idx, seed, r.pal[self.part % 2]);
         self.in_image_part = false;
+        self.in_concert = false;
         self.parts_since_image += 1;
     }
 
@@ -261,6 +288,11 @@ impl Demo {
         let running = self.t - self.start.unwrap_or(self.t);
         if running > 120.0 && self.eggs.active(self.t).is_none() && self.rng.below(36) == 0 {
             self.eggs.start(eggs::FLYBY, 0, self.t);
+        }
+        if self.in_concert {
+            // N during the concert: on to the next act
+            self.songs += 1;
+            return;
         }
         if self.intro {
             self.intro = false;
@@ -309,6 +341,7 @@ impl Demo {
         let track = font::clean(it.next().unwrap_or(""), 48);
         self.track = Some((artist, track));
         self.track_t = self.t;
+        self.songs += 1;
     }
 
     /// The page wrote a new 256×256 picture into `image_buf`.
@@ -357,7 +390,12 @@ impl Demo {
         } else {
             (12.0, 45.0)
         };
-        if (self.audio.beat && st > min_t && sb >= 32) || st > max_t || (self.in_image_part && st > min_t && self.audio.beat && sb >= 16) {
+        if self.in_concert {
+            if st > fx::concert::SECONDS {
+                // the show is over: the demo that was on starts again
+                self.set_demo(self.demo);
+            }
+        } else if (self.audio.beat && st > min_t && sb >= 32) || st > max_t || (self.in_image_part && st > min_t && self.audio.beat && sb >= 16) {
             self.next_part();
         }
         let st = t - self.part_t0;
@@ -374,6 +412,7 @@ impl Demo {
             name: r.name,
             text: &r.text,
             image: self.image.as_ref(),
+            song: self.songs,
         };
         self.fx.draw(&mut self.fb, &ctx);
 
@@ -382,7 +421,7 @@ impl Demo {
             self.overlays(flags);
         }
         let dtime = t - self.demo_t0;
-        if dtime < 5.0 && self.part == 0 && !self.in_image_part && !self.intro {
+        if dtime < 5.0 && self.part == 0 && !self.in_image_part && !self.intro && !self.in_concert {
             self.title_card(dtime);
         }
         let playing = self.track.is_some() && !self.in_image_part && self.now_playing(t - self.track_t);
@@ -650,6 +689,32 @@ mod tests {
         assert_ne!(name, "GOD JUL", "it ends within a minute");
         assert_eq!((demo, part), (41, 0), "then the chosen demo starts from its first part");
         assert!(d.recipes.iter().all(|r| r.parts.iter().all(|p| d.defs[p.0].name != "GOD JUL")), "never inside a demo");
+    }
+
+    #[test]
+    fn the_concert_plays_half_an_hour_then_the_demos_carry_on() {
+        let mut d = Demo::new();
+        let mut t = 10.0;
+        d.set_demo(7);
+        d.concert();
+        run(&mut d, &mut t, 1.0);
+        assert_eq!(d.state().2, "LIVE CONCERT");
+        // songs come and go, N skips an act: the concert stays on
+        let len = "QUEEN\nSONG".len();
+        d.text_buf[..len].copy_from_slice(b"QUEEN\nSONG");
+        d.set_track(len);
+        d.next_part();
+        for _ in 0..6 {
+            t += 290.0; // jump ahead, then 5 s on screen: 29.5 minutes in all
+            run(&mut d, &mut t, 5.0);
+        }
+        assert_eq!(d.state().2, "LIVE CONCERT", "still on after {:.0} s", d.t - d.part_t0);
+        assert!(d.concert_left() > 0.0 && d.concert_left() < 60.0);
+        run(&mut d, &mut t, 61.0);
+        assert_eq!(d.concert_left(), 0.0);
+        assert_eq!(d.state().0, 7, "then the demo that was on starts again");
+        assert_ne!(d.state().2, "LIVE CONCERT");
+        assert!(d.recipes.iter().all(|r| r.parts.iter().all(|p| d.defs[p.0].name != "LIVE CONCERT")), "never inside a demo");
     }
 
     #[test]

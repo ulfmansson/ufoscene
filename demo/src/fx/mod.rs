@@ -8,6 +8,7 @@
 pub mod abcgames;
 pub mod christmas;
 pub mod classic;
+pub mod concert;
 pub mod deform;
 pub mod image;
 pub mod oldskool;
@@ -42,6 +43,9 @@ pub struct Ctx<'a> {
     pub text: &'a str,
     /// The current artist picture from Spotify, if any.
     pub image: Option<&'a Image>,
+    /// Goes up by one every time the page says a new song started (and on N during the
+    /// concert); effects that follow the songs watch it change.
+    pub song: u32,
 }
 
 /// A 256×256 picture handed over by the page (the artist on Spotify right now).
@@ -102,10 +106,10 @@ pub fn all() -> Vec<Def> {
     v
 }
 
-/// Scenes for special days, kept out of `all()` so the 100 demos never change.
-/// The demo player adds them after the recipes are built.
+/// Scenes for special days and the concert, kept out of `all()` so the 100 demos never
+/// change. The demo player adds them after the recipes are built.
 pub fn seasonal() -> Vec<Def> {
-    vec![christmas::def()]
+    vec![christmas::def(), concert::def()]
 }
 
 // ---------------------------------------------------------------- palettes
@@ -419,6 +423,7 @@ mod tests {
                         name: "TEST DEMO",
                         text: "HELLO WORLD   ",
                         image: if variant >= 2 { Some(&img) } else { None },
+                        song: 0,
                     };
                     fx.draw(&mut fb, &c);
                 }

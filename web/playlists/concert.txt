@@ -1,0 +1,22 @@
+# name: ufoscene.net · The concert: Queen
+# description: The setlist for the 30-minute pixel concert on ufoscene.net (press C). About 29 minutes, in this order.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+# The concert (C) plays these in order on Spotify; every new song starts the next act on stage.
+# Keep it just under 30 minutes, so the last song ends before the band takes its bow.
+
+# Act 1, clap along
+Queen - We Will Rock You
+# Act 2, the light show
+Queen - Another One Bites the Dust
+# Act 3, pyro
+Queen - Don't Stop Me Now
+# Act 4, the disco
+Queen - Under Pressure
+# Act 5, the stadium wave
+Queen - Crazy Little Thing Called Love
+# Act 6, the guitar solo
+Queen - I Want to Break Free
+# Act 7, the piano ballad
+Queen - Bohemian Rhapsody
+# Act 8, the finale
+Queen - We Are the Champions
