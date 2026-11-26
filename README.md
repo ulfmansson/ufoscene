@@ -2,6 +2,10 @@
 
 **Live at <https://ufoscene.net>** · share it with **#ufoscene**
 
+**Help Ukraine 🇺🇦** at <https://ukraine.ufoscene.net> (also <https://pi.ufoscene.net>): donate
+to the defence of Ukraine and get a Raspberry Pi running ufoscene. The **Help Ukraine** link in
+the panel (**P**) goes there.
+
 **UFO: 100 Amiga-style demos that dance to your music**, written in Rust and running in the browser.
 Copper bars, chrome logos, sine scrollers, glenz vectors, plasma, tunnels, a ZX Spectrum-style
 platform room and a snowy Swedish village: every part reacts to the bass, the beat and the
