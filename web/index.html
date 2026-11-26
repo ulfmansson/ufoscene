@@ -42,6 +42,8 @@
   #panel code { color: #ffdd88; user-select: all; }
   #panel .row { margin: 6px 0; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
   #panel a { color: #ffdd88; }
+  #panel a#help-ukraine { color: #ffd500; background: #0057b7; padding: 4px 12px; text-decoration: none; font-weight: bold; }
+  #panel a#help-ukraine:hover { text-decoration: underline; }
   #demos {
     display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 2px;
     max-height: 30vh; overflow: auto; background: #003a77; padding: 4px; margin: 6px 0;
@@ -142,6 +144,7 @@
     <span id="setup-status"></span>
     <button id="guide-open">Setup guide (G)</button>
     <a id="guides-link" href="guides.html" target="_blank" rel="noopener" title="Mac, Windows, Linux, phone, TV, Raspberry Pi, your own copy">Step-by-step guides</a>
+    <a id="help-ukraine" href="https://ukraine.ufoscene.net/" target="_blank" rel="noopener" title="Donate to the defence of Ukraine and get a Raspberry Pi running ufoscene">Help Ukraine 🇺🇦</a>
   </div>
   <div id="demos"></div>
   <details id="more">
