@@ -1,0 +1,14 @@
+[package]
+name = "ufo-native"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+publish = false
+description = "The UFO demos on a Raspberry Pi without a browser: DRM/KMS output, PipeWire sound, the phone remote (std only)"
+
+[dependencies]
+ufo-demo = { path = "../demo" }
+
+[[bin]]
+name = "ufo-native"
+path = "src/main.rs"

@@ -7,5 +7,12 @@ name = "ufo-demo"
 version = "0.1.0"
 
 [[package]]
+name = "ufo-native"
+version = "0.1.0"
+dependencies = [
+ "ufo-demo",
+]
+
+[[package]]
 name = "ufo-serve"
 version = "0.1.0"
