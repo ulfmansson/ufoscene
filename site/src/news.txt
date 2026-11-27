@@ -1,0 +1,4 @@
+# Newest first. The first line that is not a comment shows for a few seconds when
+# ufoscene.net starts ("New: ..."). Add a line on top when a feature lands.
+Got an idea for UFO? Write it in the feature-request box at the bottom of this panel.
+On a phone, tap the screen to open the settings, and double-tap for fullscreen.

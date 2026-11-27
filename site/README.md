@@ -42,7 +42,8 @@ from Nix), run `unset DEVELOPER_DIR SDKROOT` first.
 | Path | What |
 |------|------|
 | `build.sh` | wasm build, copy of every file in `web/` (except `ufo.wasm`), `site-config.json`, `src/`, description tags, `404.html`, `_headers`, `.nojekyll` → `dist/` |
-| `src/site.js`, `src/site.css` | website only: the support link and the optional extra scroll line |
+| `src/site.js`, `src/site.css` | website only: the support link, the optional extra scroll line, the feature-request box (posts to pi.ufoscene.net `/ideas`; `ideasUrl` in config.json, `""` turns it off) |
+| `src/news.txt` | newest feature first; its top line shows as "New: …" for a few seconds at the start. Add a line on top when a feature lands |
 | (`web/guides.html`) | the step-by-step guides for every setup, copied like the rest of `web/`; `build.sh` gives it its own description tags and canonical address (`<site>/guides.html`) |
 | `config.example.json` | the site's settings; copy to `config.json` |
 | `infra/` | **AWS**: Pulumi TypeScript project, S3 + CloudFront + optional domain |
