@@ -19,4 +19,6 @@ runtime:
 #                         validation CNAMEs are in your DNS and ACM shows it issued; with ufo:createZone
 #                         at another registrar, when that registrar uses the zone's name servers
 #   ufo:maxAge            seconds browsers and CloudFront may keep a file (default 60; names are not hashed)
+#   ufo:googleSiteVerification  token from Google Search Console (Domain property, DNS TXT
+#                         verification); creates the TXT record in the Route 53 zone
 #   ufo:priceClass        CloudFront price class (default PriceClass_100 = Europe + North America)

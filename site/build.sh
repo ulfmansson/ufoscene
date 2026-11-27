@@ -63,7 +63,8 @@ META="<link rel=\"canonical\" href=\"$SITE_URL\">
 <meta property=\"og:url\" content=\"$SITE_URL\">
 <meta property=\"og:site_name\" content=\"$SITE_NAME\">
 <meta property=\"og:title\" content=\"$SITE_NAME · A hymn to the Swedish demo scene\">
-<meta property=\"og:description\" content=\"$TAGLINE\">"
+<meta property=\"og:description\" content=\"$TAGLINE\">
+<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",\"@type\":\"WebApplication\",\"name\":\"$SITE_NAME\",\"url\":\"$SITE_URL\",\"description\":\"$TAGLINE\",\"applicationCategory\":\"MultimediaApplication\",\"operatingSystem\":\"Any (web browser)\",\"inLanguage\":\"en\",\"isAccessibleForFree\":true,\"offers\":{\"@type\":\"Offer\",\"price\":\"0\",\"priceCurrency\":\"EUR\"}}</script>"
 META="$META" perl -0pi -e 's#(</title>)#$1\n$ENV{META}#' "$DIST/index.html"
 grep -qF '<meta property="og:url"' "$DIST/index.html" || { print -u2 "build.sh: could not add the meta tags"; exit 1; }
 # The step-by-step guides (web/guides.html) are a page of their own: same tags, own address.
@@ -93,7 +94,31 @@ print "settings: ${CONFIG:t}"
 #  - GitHub Pages has no rewrites: it serves 404.html for unknown paths, so 404.html
 #    is the page itself (status 404, but the browser runs it all the same).
 cp "$DIST/index.html" "$DIST/404.html"
+# ...but search engines should not list the 404 copy as a page of its own.
+fix 404.html 's#(<meta charset="utf-8">)#$1\n<meta name="robots" content="noindex">#' '<meta name="robots" content="noindex">'
 touch "$DIST/.nojekyll" # GitHub Pages: publish as-is, no Jekyll
+
+# Search engines: what to crawl (robots.txt) and the pages there are (sitemap.xml).
+# Submit <site>/sitemap.xml in Google Search Console (see site/README.md, "Google search").
+# Every crawler is welcome, AI ones (GPTBot, ClaudeBot, Google-Extended, ...) included.
+cat > "$DIST/robots.txt" <<EOF
+User-agent: *
+Allow: /
+Disallow: /callback
+
+Sitemap: ${SITE_URL%/}/sitemap.xml
+EOF
+# llms.txt (llmstxt.org): a plain summary of the site for AI assistants, with its links.
+cp "$SITE/src/llms.txt" "$DIST/llms.txt"
+SITE_URL="$SITE_URL" perl -pi -e 's#https://ufoscene\.net/#$ENV{SITE_URL}#g' "$DIST/llms.txt"
+TODAY="$(date -u +%Y-%m-%d)"
+{
+  print '<?xml version="1.0" encoding="UTF-8"?>'
+  print '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+  print "  <url><loc>$SITE_URL</loc><lastmod>$TODAY</lastmod></url>"
+  [[ -f "$DIST/guides.html" ]] && print "  <url><loc>${SITE_URL%/}/guides.html</loc><lastmod>$TODAY</lastmod></url>"
+  print '</urlset>'
+} > "$DIST/sitemap.xml"
 
 # Response headers (Cloudflare and Netlify read _headers; other hosts ignore the file).
 # Microphone and screen/tab capture stay allowed for the page itself, nothing else.
