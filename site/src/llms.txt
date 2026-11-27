@@ -1,0 +1,24 @@
+# ufoscene.net
+
+> 100 Amiga-style demos that dance to your music, running in the browser. A hymn to the Swedish demo scene of the 80s and 90s: copper bars, chrome logos, sine scrollers, glenz vectors, plasma, tunnels and more, all reacting to the bass, the beat and the treble of whatever is playing. Free, no sign-up, no install.
+
+UFO is written in Rust and compiled to WebAssembly without any crates. It renders every pixel into a 384×216 framebuffer reduced to the Amiga's 4096 colours. There are 74 effects and 100 demos: demo 1 is the original UFO demo, demos 2–100 are generated from the effect library, each with its own (made-up) title, group, palettes and scroll text.
+
+Music can come from built-in 80s & 90s internet radio (no setup), a shared Chrome/Edge tab or the screen, the microphone, or a loopback device such as BlackHole on a Mac. With no sound it runs on a 125 BPM autopilot. Optional Last.fm or Spotify connections show the artist and song in the demo, with artist photos worked into the graphics. Cast the tab to a TV for a party.
+
+Keys: ←/→ change demo, R a random demo, P opens the panel (and pauses), G the setup guide, Space/B the next/previous song or station, F fullscreen, T TV mode, C a 30-minute pixel concert. A link such as https://ufoscene.net/#42 opens demo 42.
+
+## Pages
+
+- [The demos](https://ufoscene.net/): the app itself; opens a setup guide on the first visit
+- [Guides](https://ufoscene.net/guides.html): step by step for the browser, Mac, Windows, Linux, a phone, the TV or a Raspberry Pi, and how to host your own copy
+
+## Source and projects
+
+- [Source code (GitHub)](https://github.com/ulfmansson/ufoscene): Rust + WebAssembly, MIT licence; README with the history of the Swedish demo scene
+- [ufoscene-pi](https://github.com/ulfmansson/ufoscene-pi): a Raspberry Pi image that boots straight into the demos
+- [Help Ukraine](https://ukraine.ufoscene.net): donate to the defence of Ukraine and get a Raspberry Pi running ufoscene
+
+## Optional
+
+- [Issues and party reports](https://github.com/ulfmansson/ufoscene/issues/new/choose)

@@ -41,7 +41,8 @@ from Nix), run `unset DEVELOPER_DIR SDKROOT` first.
 
 | Path | What |
 |------|------|
-| `build.sh` | wasm build, copy of every file in `web/` (except `ufo.wasm`), `site-config.json`, `src/`, description tags, `404.html`, `_headers`, `.nojekyll` → `dist/` |
+| `build.sh` | wasm build, copy of every file in `web/` (except `ufo.wasm`), `site-config.json`, `src/`, description tags and structured data, `404.html` (noindex), `robots.txt`, `sitemap.xml`, `llms.txt`, `_headers`, `.nojekyll` → `dist/` |
+| `src/llms.txt` | the [llms.txt](https://llmstxt.org) summary for AI assistants; `build.sh` swaps in `SITE_URL` |
 | `src/site.js`, `src/site.css` | website only: the support link and the optional extra scroll line |
 | (`web/guides.html`) | the step-by-step guides for every setup, copied like the rest of `web/`; `build.sh` gives it its own description tags and canonical address (`<site>/guides.html`) |
 | `config.example.json` | the site's settings; copy to `config.json` |
@@ -262,6 +263,40 @@ Remove everything (the domain registration itself stays):
 ```bash
 cd site/infra && AWS_PROFILE=<your-profile> pulumi destroy -s dev
 ```
+
+## Google search
+
+`build.sh` already gives every build what search engines and AI assistants look for:
+
+- `robots.txt`: everything may be crawled (AI crawlers too), except `/callback`; points to the sitemap
+- `sitemap.xml`: the page and `guides.html`, dated with the build day
+- description, canonical and Open Graph tags, plus `WebApplication` structured data (JSON-LD) on the page
+- `404.html` marked `noindex`; on AWS, CloudFront answers missing files with a real 404 instead of S3's 403
+- `llms.txt`: a plain-text summary with the main links, for ChatGPT, Claude, Perplexity and the like
+
+To get into Google, prove you own the domain in **Google Search Console** and submit the sitemap:
+
+1. Open <https://search.google.com/search-console>, *Add property*, choose **Domain** and type
+   `ufoscene.net`. This one property covers `www.` and every subdomain (`ukraine.`, `pi.`).
+2. Google shows a TXT record `google-site-verification=…`. Put the token in the stack and deploy:
+
+   ```bash
+   cd site/infra && AWS_PROFILE=<your-profile> pulumi config set ufo:googleSiteVerification <token> -s prod
+   ```
+
+   ```bash
+   cd site && AWS_PROFILE=<your-profile> ./deploy.sh prod
+   ```
+
+   The run adds the TXT record to the Route 53 zone. If the apex already has a TXT record (SPF,
+   for example) that Pulumi does not manage, the run stops instead of replacing it: add the
+   Google value to that record by hand.
+3. Back in Search Console, *Verify* (DNS can take a few minutes).
+4. *Sitemaps* → submit `https://ufoscene.net/sitemap.xml`, then *URL inspection* →
+   `https://ufoscene.net/` → *Request indexing*.
+
+The first pages usually show up within days. Bing Webmaster Tools can import the Search Console
+property in one click, which also covers DuckDuckGo and the AI assistants that search Bing.
 
 ## Deploy to Cloudflare (alternative)
 

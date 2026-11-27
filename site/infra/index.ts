@@ -32,6 +32,9 @@ if (createZone && (givenZoneId || lookUpZone)) {
 const fixNameServers = domain !== "" && (config.getBoolean("fixNameServers") ?? false);
 const maxAge = config.getNumber("maxAge") ?? 60;
 const priceClass = config.get("priceClass") || "PriceClass_100";
+// ufo:googleSiteVerification: the token Google Search Console gives for a "Domain" property
+// (the part after google-site-verification=). Needs the Route 53 zone; adds the TXT record.
+const googleSiteVerification = (config.get("googleSiteVerification") || "").trim().replace(/^google-site-verification=/, "");
 
 const distDir = path.resolve(__dirname, "..", "dist");
 if (!fs.existsSync(path.join(distDir, "index.html"))) {
@@ -66,6 +69,7 @@ const contentTypes: Record<string, string> = {
     ".wasm": "application/wasm",
     ".txt": "text/plain; charset=utf-8",
     ".json": "application/json; charset=utf-8",
+    ".xml": "application/xml; charset=utf-8",
     ".png": "image/png",
     ".jpg": "image/jpeg",
     ".svg": "image/svg+xml",
@@ -272,6 +276,14 @@ const distribution = new aws.cloudfront.Distribution(
         httpVersion: "http2and3",
         defaultRootObject: "index.html",
         priceClass,
+        // S3 answers 403 for a file that does not exist (CloudFront may not list the bucket):
+        // give visitors and search engines a real 404 instead.
+        customErrorResponses: [403, 404].map((errorCode) => ({
+            errorCode,
+            responseCode: 404,
+            responsePagePath: "/404.html",
+            errorCachingMinTtl: 60,
+        })),
         aliases: certificateArn ? names : [],
         origins: [
             {
@@ -332,6 +344,18 @@ if (zoneId && certificateArn) {
             });
         }
     }
+}
+
+// Google Search Console, "Domain" property: proves ownership of the domain and every subdomain.
+if (googleSiteVerification) {
+    if (!zoneId) throw new Error("ufo:googleSiteVerification needs a Route 53 zone (ufo:route53, ufo:hostedZoneId or ufo:createZone)");
+    new aws.route53.Record("google-site-verification", {
+        zoneId,
+        name: domain,
+        type: "TXT",
+        ttl: 300,
+        records: [`google-site-verification=${googleSiteVerification}`],
+    });
 }
 
 // ------------------------------------------------------------------ outputs
