@@ -42,10 +42,11 @@ from Nix), run `unset DEVELOPER_DIR SDKROOT` first.
 | Path | What |
 |------|------|
 | `build.sh` | wasm build, copy of every file in `web/` (except `ufo.wasm`), `site-config.json`, `src/`, description tags, `404.html`, `_headers`, `.nojekyll` → `dist/` |
-| `src/site.js`, `src/site.css` | website only: the support link, the optional extra scroll line, the feature-request box (posts to pi.ufoscene.net `/ideas`; `ideasUrl` in config.json, `""` turns it off) |
-| `src/news.txt` | newest feature first; its top line shows as "New: …" for a few seconds at the start. Add a line on top when a feature lands |
+| `src/site.js`, `src/site.css` | website only: the support link and the optional extra scroll line |
 | (`web/guides.html`) | the step-by-step guides for every setup, copied like the rest of `web/`; `build.sh` gives it its own description tags and canonical address (`<site>/guides.html`) |
 | `config.example.json` | the site's settings; copy to `config.json` |
+| `src/site.js` feature box | the one-line feature request at the bottom of the panel; posts to pi.ufoscene.net `/ideas` (`ideasUrl` in config.json, `""` turns it off) |
+| `src/news.txt` | newest feature first; its top line shows as "New: …" in the panel, and for a few seconds on screen while the panel is closed. Add a line on top when a feature lands |
 | `infra/` | **AWS**: Pulumi TypeScript project, S3 + CloudFront + optional domain |
 | `deploy.sh` | AWS: `build.sh`, `pulumi up` for a stack, CloudFront invalidation |
 | `register-domain.sh`, `domain-contact.example.json` | AWS: buy a domain in Route 53 Domains (asks first) |
