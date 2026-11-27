@@ -201,6 +201,9 @@ performances:
 - **The finale**: the flag waving on the LED wall, *12 POINTS*, sunflowers along the stage,
   blue and yellow fireworks and confetti, and *DYAKUYU!* ("thank you") at the bow
 
+During each of the three acts, the artist and song are shown left of the LED wall, and the
+result right of it: *1ST PLACE*, Eurovision, the year and the points (280, 534 and 631).
+
 With Spotify connected, **U** plays [`web/playlists/ukraine.txt`](web/playlists/ukraine.txt)
 in order. The performers are the same made-up pixel band; only the staging nods to the
 originals.
