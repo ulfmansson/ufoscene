@@ -47,8 +47,9 @@ fix() { # fix <file> <perl substitution> <text that must exist afterwards>
   fi
 }
 
-# Website-only layer (site/src): support link and the optional extra scroll line.
-cp "$SITE"/src/site.js "$SITE"/src/site.css "$DIST/"
+# Website-only layer (site/src): support link, the optional extra scroll line, the newest
+# feature at the start (news.txt) and the feature-request box.
+cp "$SITE"/src/site.js "$SITE"/src/site.css "$SITE"/src/news.txt "$DIST/"
 fix index.html 's#</head>#<link rel="stylesheet" href="site.css">\n</head>#' '<link rel="stylesheet" href="site.css">'
 fix index.html 's#</body>#<script type="module" src="site.js"></script>\n</body>#' '<script type="module" src="site.js"></script>'
 # Search results and link previews. The page title itself comes from web/index.html.

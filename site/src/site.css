@@ -1,3 +1,19 @@
 /* Website-only: the support link in the panel's setup row (the guide's styles are in web/index.html). */
 #support { margin-left: auto; font-size: 13px; color: #ffdd88; text-decoration: none; white-space: nowrap; }
 #support:hover { text-decoration: underline; }
+
+/* The feature-request box, last in the panel. */
+#idea { border-top: 1px solid #ffffff33; padding-top: 8px; }
+#idea label { color: #ffdd88; }
+#panel #idea input[type=text] { flex: 1 1 16em; width: auto; max-width: 36em; }
+#idea-status { font-size: 13px; }
+/* The newest feature (news.txt): a line in the panel, and on screen at the start when the panel is closed. */
+#news-line { margin: 6px 0; color: #ffdd88; }
+#news-line b { color: #ff8800; }
+#news {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 50;
+  max-width: min(90vw, 44em); padding: 8px 16px; background: #0055aaee; color: #fff;
+  border: 2px solid #ffdd88; font: 15px/1.4 ui-monospace, Menlo, monospace; text-align: center;
+  pointer-events: none; transition: opacity 1s;
+}
+#news.gone { opacity: 0; }
