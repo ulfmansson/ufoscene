@@ -43,9 +43,11 @@ pub struct Ctx<'a> {
     pub text: &'a str,
     /// The current artist picture from Spotify, if any.
     pub image: Option<&'a Image>,
-    /// Goes up by one every time the page says a new song started (and on N during the
-    /// concert); effects that follow the songs watch it change.
+    /// Goes up by one every time the page says a new song started; effects that follow
+    /// the songs watch it change.
     pub song: u32,
+    /// Goes up by one on every N during a concert: on to the next act.
+    pub skips: u32,
 }
 
 /// A 256×256 picture handed over by the page (the artist on Spotify right now).
@@ -109,7 +111,7 @@ pub fn all() -> Vec<Def> {
 /// Scenes for special days and the concert, kept out of `all()` so the 100 demos never
 /// change. The demo player adds them after the recipes are built.
 pub fn seasonal() -> Vec<Def> {
-    vec![christmas::def(), concert::def()]
+    vec![christmas::def(), concert::def(), concert::ukraine_def()]
 }
 
 // ---------------------------------------------------------------- palettes
@@ -424,6 +426,7 @@ mod tests {
                         text: "HELLO WORLD   ",
                         image: if variant >= 2 { Some(&img) } else { None },
                         song: 0,
+                        skips: 0,
                     };
                     fx.draw(&mut fb, &c);
                 }

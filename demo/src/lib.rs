@@ -76,10 +76,11 @@ pub extern "C" fn ufo_christmas(d: *mut Demo) {
     unsafe { (*d).christmas_first() }
 }
 
-/// Start the half-hour concert; the demos carry on when it is over.
+/// Start a concert (0: the half-hour rock concert, 1: the ten-minute Ukraine show); the
+/// demos carry on when it is over.
 #[unsafe(no_mangle)]
-pub extern "C" fn ufo_concert(d: *mut Demo) {
-    unsafe { (*d).concert() }
+pub extern "C" fn ufo_concert(d: *mut Demo, show: u32) {
+    unsafe { (*d).concert(show as usize) }
 }
 
 /// Seconds left of the concert, 0 when none is on.

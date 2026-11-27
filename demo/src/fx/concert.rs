@@ -10,28 +10,44 @@
 //! them the acts change every few minutes. The artist's photo, when there is one, shows on
 //! the LED wall. The band itself is made up: any music can play this stage.
 //!
-//! Like the Christmas scene it is not in `all()`, so the 100 demos stay as they are.
+//! A second show, UKRAINE LIVE (E on the page, `#ukraine`), is ten minutes of Ukraine's
+//! three Eurovision winners, one act each, staged after their Eurovision performances: fire,
+//! big drums and trembita horns for Wild Dances (2004), a tree growing across the dark stage
+//! for 1944 (2016), embroidery, a flute, a breakdancer and a pink bucket hat for Stefania
+//! (2022), and a blue and yellow finale. The performers stay the same made-up pixel band.
+//!
+//! Like the Christmas scene neither is in `all()`, so the 100 demos stay as they are.
 
 use std::f32::consts::TAU;
 
 use super::*;
 use crate::font;
 
-/// How long the concert lasts, in seconds.
+/// How long the rock concert lasts, in seconds.
 pub const SECONDS: f32 = 30.0 * 60.0;
+/// How long the Ukraine show lasts: three songs, about three minutes each.
+pub const UKRAINE_SECONDS: f32 = 10.0 * 60.0;
+/// The shows the page can start (`Demo::concert`): the scene's name and its length.
+pub const SHOWS: [(&str, f32); 2] = [("LIVE CONCERT", SECONDS), ("UKRAINE LIVE", UKRAINE_SECONDS)];
 /// The dark minute before the lights go up (here: seconds).
 const DOORS: f32 = 8.0;
 /// The band takes its bow in the last seconds.
 const GOODBYE: f32 = 18.0;
-/// Without song names, each act lasts this long.
-const SLOT: f32 = 224.0;
 /// A song change in the opening seconds is the first song arriving, not a new one.
 const FIRST_SONG: f32 = 25.0;
-/// The finale is held back for the end of the show.
-const FINALE_FROM: f32 = SECONDS - 150.0;
 
 pub fn def() -> Def {
-    Def { name: "LIVE CONCERT", flags: VECTOR | OWN_TEXT, make: |s| Box::new(Concert::new(s)) }
+    Def { name: SHOWS[0].0, flags: VECTOR | OWN_TEXT, make: |s| Box::new(Concert::new(s, Show::Rock)) }
+}
+
+pub fn ukraine_def() -> Def {
+    Def { name: SHOWS[1].0, flags: VECTOR | OWN_TEXT, make: |s| Box::new(Concert::new(s, Show::Ukraine)) }
+}
+
+#[derive(Clone, Copy, PartialEq, Debug)]
+enum Show {
+    Rock,
+    Ukraine,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -43,10 +59,50 @@ enum Act {
     Stadium,
     Solo,
     Ballad,
+    /// Ukraine 2004: fire, big drums and trembita horns.
+    WildDances,
+    /// Ukraine 2016: a tree grows across the dark stage.
+    Tree,
+    /// Ukraine 2022: embroidery, a flute, a breakdancer, a pink bucket hat.
+    Stefania,
     Finale,
 }
-const ACTS: [Act; 8] = [Act::Clap, Act::Lights, Act::Pyro, Act::Disco, Act::Stadium, Act::Solo, Act::Ballad, Act::Finale];
-const FINALE: usize = 7;
+
+/// How a show runs: its acts (the finale last), how long it lasts, how long an act lasts
+/// without song names, and when the finale starts whatever plays.
+struct Plan {
+    acts: &'static [Act],
+    length: f32,
+    slot: f32,
+    finale_from: f32,
+}
+
+const ROCK: Plan = Plan {
+    acts: &[Act::Clap, Act::Lights, Act::Pyro, Act::Disco, Act::Stadium, Act::Solo, Act::Ballad, Act::Finale],
+    length: SECONDS,
+    slot: 224.0,
+    finale_from: SECONDS - 150.0,
+};
+
+const UKRAINE: Plan = Plan {
+    acts: &[Act::WildDances, Act::Tree, Act::Stefania, Act::Finale],
+    length: UKRAINE_SECONDS,
+    slot: 184.0,
+    finale_from: UKRAINE_SECONDS - 40.0,
+};
+
+impl Show {
+    fn plan(self) -> &'static Plan {
+        match self {
+            Show::Rock => &ROCK,
+            Show::Ukraine => &UKRAINE,
+        }
+    }
+}
+
+/// The colours of Ukraine's flag.
+const BLUE: u32 = 0xFFBB_5B00;
+const YELLOW: u32 = 0xFF00_D5FF;
 
 // The stage, top to bottom.
 const TRUSS_Y: i32 = 3;
@@ -71,6 +127,8 @@ struct Look {
 const SINGER: Look = Look { skin: 0xFF8C_ACE0, hair: 0xFF10_1420, style: 0, top: 0xFFF0_F5F5, legs: 0xFF28_1EC8 };
 const GUITARIST: Look = Look { skin: 0xFF9C_BAE6, hair: 0xFF16_1C28, style: 1, top: 0xFF28_1E1E, legs: 0xFF23_1919 };
 const BASSIST: Look = Look { skin: 0xFF96_B4E2, hair: 0xFF32_5478, style: 2, top: 0xFFC8_6E3C, legs: 0xFF3C_2828 };
+/// Wild Dances: fur and red, long dark hair.
+const WARRIOR: Look = Look { skin: 0xFF96_B4E0, hair: 0xFF0F_141E, style: 2, top: 0xFF28_4678, legs: 0xFF1E_1EA0 };
 const DRUMMER: Look = Look { skin: 0xFFA0_BEEC, hair: 0xFF6E_C8E6, style: 3, top: 0xFF3C_3CDC, legs: 0xFF28_2828 };
 
 /// Where the left and right hand are.
@@ -99,9 +157,11 @@ struct Bit {
 }
 
 pub struct Concert {
+    show: Show,
     act: usize,
     act_t0: f32,
     song: Option<u32>,
+    skips: Option<u32>,
     /// Song names arrive, so they set the pace instead of the clock.
     by_song: bool,
     fans: Vec<Fan>,
@@ -109,11 +169,13 @@ pub struct Concert {
     flames: [f32; 4],
     /// Mirror ball reflections: x phase, y, colour phase.
     dots: Vec<(f32, f32, f32)>,
+    /// Yellow to white, for the Ukraine show's dancing letters over the blue.
+    gold: Palette,
     rng: Rng,
 }
 
 impl Concert {
-    pub fn new(seed: u32) -> Self {
+    fn new(seed: u32, show: Show) -> Self {
         let mut rng = Rng::new(seed ^ 0x51AE);
         let mut fans = Vec::new();
         for row in 0..4 {
@@ -125,17 +187,24 @@ impl Concert {
             }
         }
         let dots = (0..70).map(|_| (rng.f(), 6.0 + rng.f() * 200.0, rng.f())).collect();
-        Concert { act: 0, act_t0: 0.0, song: None, by_song: false, fans, bits: Vec::new(), flames: [0.0; 4], dots, rng }
+        let gold = Palette::cosine([0.95, 0.85, 0.45], [0.05, 0.15, 0.4], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0]);
+        Concert { show, act: 0, act_t0: 0.0, song: None, skips: None, by_song: false, fans, bits: Vec::new(), flames: [0.0; 4], dots, gold, rng }
     }
 
     fn next_act(&mut self, t: f32) {
-        // the finale waits for the end of the show; before that the acts go round again
-        self.act = if self.act + 1 >= FINALE && t < SECONDS - 600.0 { 1 } else { (self.act + 1).min(FINALE) };
+        // the finale waits for the end of the show; in a long show the acts go round again
+        let p = self.show.plan();
+        let finale = p.acts.len() - 1;
+        self.act = if self.act + 1 >= finale && t < p.length - 600.0 { 1 } else { (self.act + 1).min(finale) };
         self.act_t0 = t;
     }
 
-    /// Which act is on at `t`, moving on with the songs (or the clock).
-    fn follow(&mut self, t: f32, song: u32) {
+    /// Which act is on at `t`, moving on with the songs (or the clock) and on every N.
+    fn follow(&mut self, t: f32, song: u32, skips: u32) {
+        if self.skips.is_some_and(|s| s != skips) {
+            self.next_act(t);
+        }
+        self.skips = Some(skips);
         match self.song {
             None => self.song = Some(song),
             Some(s) if s != song => {
@@ -147,13 +216,15 @@ impl Concert {
             }
             _ => {}
         }
+        let p = self.show.plan();
+        let finale = p.acts.len() - 1;
         let age = t - self.act_t0;
         // songs set the pace; a song that never seems to end still gives way after 7 minutes
-        if (!self.by_song && age > SLOT) || age > 420.0 {
+        if (!self.by_song && age > p.slot) || age > 420.0 {
             self.next_act(t);
         }
-        if t > FINALE_FROM && self.act != FINALE {
-            self.act = FINALE;
+        if t > p.finale_from && self.act != finale {
+            self.act = finale;
             self.act_t0 = t;
         }
     }
@@ -331,6 +402,74 @@ fn guitar(fb: &mut Fb, x: f32, hip: f32, col: u32, long: bool, tilt: f32, k: f32
     ((bx + 1.0, by - 1.0), (bx + (ex - bx) * 0.6, by + (ey - by) * 0.6))
 }
 
+/// A big frame drum held in front of the body. Returns the hand that beats it (on the
+/// beat it is on the skin, then it swings up) and the hand that holds the rim.
+fn frame_drum(fb: &mut Fb, x: f32, hip: f32, c: &Ctx, k: f32) -> ((f32, f32), (f32, f32)) {
+    let (cx, cy) = (x, hip - 4.0);
+    ellipse(fb, cx, cy, 5.0, 8.0, scale(rgb(90, 50, 25), k));
+    ellipse(fb, cx, cy, 4.0, 7.0, scale(rgb(225, 200, 150), (k + c.a.pulse * 0.3).min(1.0)));
+    fb.hspan(cx as i32 - 3, cx as i32 + 4, cy as i32, scale(rgb(170, 40, 30), k));
+    ((cx + 3.0, cy - 2.0 - 9.0 * c.phase), (cx - 4.0, cy + 5.0))
+}
+
+/// A bucket hat on a band member whose shoulders are `sh` (see `body`).
+fn bucket_hat(fb: &mut Fb, sh: Hands, lean: f32, col: u32, k: f32) {
+    let hx = (sh.0 .0 + sh.1 .0) / 2.0 + lean * 0.3;
+    let top = sh.0 .1 - 1.5;
+    let (x0, y0) = ((hx - 2.5).round() as i32, (top - 8.0).round() as i32);
+    let col = scale(col, k);
+    fb.fill_rect(x0 - 1, y0 - 2, 8, 4, col);
+    fb.fill_rect(x0 - 3, y0 + 2, 12, 1, col);
+    fb.hspan(x0, x0 + 6, y0 - 2, scale(mix(col, rgb(255, 255, 255), 0.4), 1.0));
+}
+
+/// A breakdancer spinning on their head at (x, floor), legs circling in the air.
+fn breakdancer(fb: &mut Fb, x: f32, floor: f32, t: f32, c: &Ctx, k: f32) {
+    let spin = t * TAU * (0.8 + c.a.bass * 0.6);
+    let skin = scale(rgb(220, 170, 135), k);
+    let (hx, hy) = (x, floor - 2.0);
+    let hip = (x, floor - 15.0);
+    thick(fb, x - 1.0, hy - 4.0, hip.0 - 1.0, hip.1, scale(rgb(245, 245, 245), k), 3);
+    ellipse(fb, hx, hy, 2.5, 2.5, skin);
+    for off in [0.0, std::f32::consts::PI] {
+        let a = spin + off;
+        let foot = (hip.0 + a.cos() * 12.0, hip.1 - 5.0 + a.sin() * 3.0);
+        let leg = if a.sin() > 0.0 { scale(rgb(30, 30, 40), k) } else { scale(rgb(60, 60, 80), k) };
+        thick(fb, hip.0, hip.1, foot.0, foot.1, leg, 2);
+    }
+    for side in [-1.0, 1.0] {
+        thick(fb, hx + side, hy - 5.0, hx + side * 6.0, floor, skin, 1);
+    }
+}
+
+/// One branch of the 1944 tree and everything that grows out of it. `grow` counts the
+/// levels that have grown so far (fractional: the newest level is still growing).
+#[allow(clippy::too_many_arguments)]
+fn branch(fb: &mut Fb, x: f32, y: f32, ang: f32, len: f32, depth: u32, grow: f32, t: f32, pulse: f32, seed: u32) {
+    let shown = (grow - depth as f32).clamp(0.0, 1.0);
+    if shown <= 0.0 {
+        return;
+    }
+    let ang = ang + (t * 0.6 + depth as f32).sin() * 0.015 * depth as f32;
+    let l = len * shown;
+    let (ex, ey) = (x + ang.cos() * l, y + ang.sin() * l);
+    let col = scale(mix(rgb(255, 205, 130), rgb(170, 20, 40), depth as f32 / 8.0), 0.7 + 0.3 * pulse);
+    thick(fb, x, y, ex, ey, col, (4 - depth as i32 / 2).max(1));
+    if depth >= 8 {
+        // blossom at the tips, glowing with the music
+        glow(fb, ex, ey, 3.0, rgb(255, 80, 110), 0.5 + 0.5 * pulse);
+        return;
+    }
+    if shown < 1.0 {
+        return;
+    }
+    let h = |n: u32| ((seed.wrapping_mul(2_654_435_761).wrapping_add(n * 40_503)) >> 16 & 0xFF) as f32 / 255.0;
+    let spread = 0.32 + 0.3 * h(1);
+    let ratio = 0.72 + 0.1 * h(2);
+    branch(fb, ex, ey, ang - spread, len * ratio, depth + 1, grow, t, pulse, seed * 2);
+    branch(fb, ex, ey, ang + spread * (0.8 + 0.3 * h(3)), len * ratio, depth + 1, grow, t, pulse, seed * 2 + 1);
+}
+
 // ---------------------------------------------------------------- the scene
 
 impl Concert {
@@ -344,6 +483,10 @@ impl Concert {
             Some(Act::Stadium) => rgb(255, 205, 130),
             Some(Act::Solo) => rgb(170, 100, 255),
             Some(Act::Ballad) => rgb(255, 190, 110),
+            Some(Act::WildDances) => if i.is_multiple_of(2) { rgb(255, 140, 30) } else { rgb(255, 50, 30) },
+            Some(Act::Tree) => rgb(255, 170, 90),
+            Some(Act::Stefania) => [rgb(255, 90, 180), YELLOW, rgb(40, 130, 255)][i % 3],
+            Some(Act::Finale) if self.show == Show::Ukraine => if i.is_multiple_of(2) { BLUE } else { YELLOW },
             Some(Act::Finale) => rainbow(i as f32 / 8.0 + t * 0.3),
         }
     }
@@ -357,6 +500,10 @@ impl Concert {
             Some(Act::Disco) => rgb(150, 40, 200),
             Some(Act::Stadium) => rgb(230, 160, 70),
             Some(Act::Solo) => rgb(90, 40, 170),
+            Some(Act::WildDances) => rgb(200, 70, 20),
+            Some(Act::Tree) => rgb(50, 20, 90),
+            Some(Act::Stefania) => rgb(200, 50, 140),
+            Some(Act::Finale) if self.show == Show::Ukraine => BLUE,
             Some(Act::Finale) => rainbow(t * 0.1),
         }
     }
@@ -386,7 +533,7 @@ impl Concert {
         for f in &self.fans {
             let r = 3.0 + f.row as f32;
             let base = 160.0 + f.row as f32 * 15.0;
-            let jumpy = !matches!(act, None | Some(Act::Ballad));
+            let jumpy = !matches!(act, None | Some(Act::Ballad | Act::Tree));
             let bounce = if jumpy { a.pulse * (1.5 + f.row as f32) * f.jump * 1.6 } else { (t * 1.3 + f.ph).sin() * 0.6 };
             let hy = base - bounce;
             let shade = rgb(5, 4, 9);
@@ -404,7 +551,7 @@ impl Concert {
             let (hands, light): (Option<Hands>, bool) = match act {
                 _ if goodbye => (Some(((sh.1 - 3.0 + sway * 3.0, sh.0 - reach), (sh.2 + 3.0 + sway * 3.0, sh.0 - reach))), false),
                 None => (f.light.then_some(((sh.1, sh.0 + 2.0), (sh.2 + 1.0, sh.0 - reach + 2.0))), f.light),
-                Some(Act::Ballad) => {
+                Some(Act::Ballad | Act::Tree) => {
                     let s = (t * 1.1 + f.ph * 0.3).sin() * 4.0;
                     (f.light.then_some(((sh.1, sh.0 + 2.0), (sh.2 + s, sh.0 - reach))), f.light)
                 }
@@ -412,7 +559,7 @@ impl Concert {
                     let pos = if clap { ((f.x - 1.0, sh.0 - reach - 1.0), (f.x + 1.0, sh.0 - reach - 1.0)) } else { (up(-3.0), (sh.2 + 3.0, sh.0 - reach + 3.0)) };
                     (Some(pos), false)
                 }
-                Some(Act::Stadium) | Some(Act::Finale) => {
+                Some(Act::Stadium | Act::Finale | Act::Stefania) => {
                     // most wave their arms in time, the rest jump on the beat
                     let s = sway * 5.0;
                     let waving = f.jump > 0.55 || a.pulse * f.jump > 0.3;
@@ -505,11 +652,62 @@ impl Concert {
         }
     }
 
+    /// The LED wall in the Ukraine show: an ornament for Wild Dances, dark for 1944 (the
+    /// tree grows over it), embroidery for Stefania, the flag in the finale.
+    fn ukraine_wall(&self, fb: &mut Fb, c: &Ctx, act: Option<Act>) {
+        let (sx, sy, sw, sh) = SCREEN;
+        let (t, pulse) = (c.t, c.a.pulse);
+        let lit = 0.7 + 0.3 * pulse;
+        for y in 0..sh {
+            for x in 0..sw {
+                let col = match act {
+                    Some(Act::WildDances) => {
+                        // diamonds in red, orange and black, sliding sideways
+                        let u = (x as f32 + t * 18.0) as i32;
+                        let d = ((u.rem_euclid(16)) - 8).abs() + ((y.rem_euclid(16)) - 8).abs();
+                        match d {
+                            0..=2 => rgb(255, 190, 60),
+                            3..=4 => rgb(200, 30, 20),
+                            7..=8 => rgb(255, 120, 30),
+                            _ => rgb(20, 8, 6),
+                        }
+                    }
+                    Some(Act::Stefania) => {
+                        // cross-stitch embroidery: red and black motifs on linen, two-pixel stitches
+                        let cy = (y + (t * 6.0) as i32).rem_euclid(48) / 2;
+                        let (dx, dy) = (((x / 2) % 12 - 6).abs(), (cy % 12 - 6).abs());
+                        if dx + dy == 4 || (dx == dy && dx <= 2) {
+                            rgb(200, 20, 30)
+                        } else if dx + dy == 6 || (dx == 0 && dy == 0) {
+                            rgb(20, 20, 20)
+                        } else {
+                            rgb(235, 228, 210)
+                        }
+                    }
+                    Some(Act::Finale) => {
+                        // the flag, waving
+                        let w = (x as f32 * 0.09 - t * 3.0 + y as f32 * 0.04).sin();
+                        let band = if (y as f32) < sh as f32 / 2.0 + w * 3.0 { BLUE } else { YELLOW };
+                        scale(band, 0.8 + 0.2 * w)
+                    }
+                    _ => rgb(3, 3, 6),
+                };
+                let row = if y % 2 == 1 { lit * 0.75 } else { lit };
+                fb.px[(sy + y) as usize * W + (sx + x) as usize] = scale(col, row);
+            }
+        }
+        if act == Some(Act::Finale) && t - self.act_t0 < 12.0 {
+            dancing_text(fb, "12 POINTS", (sx + (sw - 124) / 2) as f32, sy as f32 + 10.0, 2.0, t, c.a, c.beats, &self.gold);
+        }
+    }
+
     fn led_wall(&self, fb: &mut Fb, c: &Ctx, act: Option<Act>, wash: u32, goodbye: bool) {
         let (sx, sy, sw, sh) = SCREEN;
         fb.fill_rect(sx - 2, sy - 2, sw + 4, sh + 4, rgb(28, 28, 34));
         let lit = 0.75 + c.a.pulse * 0.25;
+        let staged = self.show == Show::Ukraine && !goodbye;
         match c.image {
+            _ if staged && act.is_some() => self.ukraine_wall(fb, c, act),
             Some(img) if act.is_some() && !goodbye => {
                 for y in 0..sh {
                     let row = if y % 2 == 1 { lit * 0.7 } else { lit };
@@ -539,8 +737,9 @@ impl Concert {
         }
         if act.is_none() && !goodbye {
             dancing_text(fb, "LIVE", (sx + (sw - 82) / 2) as f32, sy as f32 + 6.0, 3.0, c.t, c.a, c.beats, c.pal);
-            let w = font::text_width("TONIGHT", 2, true);
-            font::text(fb, "TONIGHT", sx + (sw - w) / 2, sy + 38, 2, true, rgb(255, 255, 255));
+            let line = if self.show == Show::Ukraine { "UKRAINE" } else { "TONIGHT" };
+            let w = font::text_width(line, 2, true);
+            font::text(fb, line, sx + (sw - w) / 2, sy + 38, 2, true, rgb(255, 255, 255));
         }
     }
 }
@@ -548,12 +747,14 @@ impl Concert {
 impl Effect for Concert {
     fn draw(&mut self, fb: &mut Fb, c: &Ctx) {
         let (t, a, dt) = (c.t, c.a, c.dt);
-        self.follow(t, c.song);
-        let act = (t >= DOORS).then(|| ACTS[self.act]);
+        self.follow(t, c.song, c.skips);
+        let plan = self.show.plan();
+        let ukraine = self.show == Show::Ukraine;
+        let act = (t >= DOORS).then(|| plan.acts[self.act]);
         let age = t - self.act_t0;
-        let goodbye = t > SECONDS - GOODBYE;
+        let goodbye = t > plan.length - GOODBYE;
         let wash = self.wash(act, c.pal, t);
-        let loud = !matches!(act, None | Some(Act::Ballad | Act::Solo)) && !goodbye;
+        let loud = !matches!(act, None | Some(Act::Ballad | Act::Solo | Act::Tree)) && !goodbye;
 
         // back wall and truss
         for y in 0..FLOOR_TOP {
@@ -587,6 +788,12 @@ impl Effect for Concert {
             }
         }
         self.led_wall(fb, c, act, wash, goodbye);
+        let tree = act == Some(Act::Tree) && !goodbye;
+        if tree {
+            // grows out of the stage behind the singer and spreads over the whole back wall
+            let grow = smoothstep(age / 45.0) * 9.0;
+            branch(fb, 192.0, FLOOR_TOP as f32, -std::f32::consts::FRAC_PI_2, 25.0, 0, grow, t, a.pulse, 1);
+        }
 
         // stage floor and its front edge, with footlights
         for y in FLOOR_TOP..FLOOR_EDGE {
@@ -610,6 +817,8 @@ impl Effect for Concert {
         let g_feet = if solo { lerp(133.0, 139.0, s_in) } else { 133.0 };
         let fx = if ballad {
             196.0
+        } else if tree {
+            192.0
         } else if solo {
             lerp(192.0, 300.0, s_in)
         } else {
@@ -652,6 +861,15 @@ impl Effect for Concert {
                         (0.0, 0.0, 0.0, 0.0)
                     }
                 }
+                Some(Act::WildDances) => (x + 40.0 * (t * 1.2 + fi).sin(), 136.0, 16.0, 0.4 + 0.5 * a.pulse),
+                Some(Act::Tree) => {
+                    if i == 3 || i == 4 {
+                        (192.0, 137.0, 12.0, 0.45)
+                    } else {
+                        (0.0, 0.0, 0.0, 0.0)
+                    }
+                }
+                Some(Act::Stefania) => (192.0 + 150.0 * (t * 0.9 + fi * 0.8).sin(), 136.0, 14.0, flash),
                 Some(Act::Finale) => (192.0 + 170.0 * (t * 1.1 + fi * 0.9).sin(), 136.0, 14.0, flash),
             };
             beam(fb, x, TRUSS_Y as f32 + 12.0, tx, ty, w, col, k);
@@ -677,11 +895,48 @@ impl Effect for Concert {
         }
 
         // the band; dimmer in the dark and the quiet parts
-        let k = if act.is_none() { 0.3 } else if ballad || solo { 0.45 } else { 0.78 + 0.22 * a.pulse };
+        let k = if act.is_none() { 0.3 } else if tree { 0.15 } else if ballad || solo { 0.45 } else { 0.78 + 0.22 * a.pulse };
         self.drums(fb, c, k);
         let bang = if loud { (c.phase * TAU).sin() * 1.8 } else { 0.0 };
-        // guitarist
-        {
+        let wild = act == Some(Act::WildDances) && !goodbye;
+        let stefania = act == Some(Act::Stefania) && !goodbye;
+        if wild {
+            // big frame drums in front, trembita horns on both sides
+            for (x, side) in [(118.0, 1.0), (266.0, -1.0)] {
+                let p = Pose { bob: -a.pulse * 2.0, lean: bang, spread: 4.0, sit: false };
+                let sh = body(fb, x, 133.0, &WARRIOR, p, k);
+                let (hit, rest) = frame_drum(fb, x + side * 2.0, 119.0 + p.bob, c, k);
+                let hands = if side > 0.0 { (rest, hit) } else { (hit, rest) };
+                arms(fb, sh, hands, &WARRIOR, k);
+            }
+            for (x, side) in [(24.0, 1.0), (360.0, -1.0)] {
+                let sh = body(fb, x, 134.0, &WARRIOR, Pose { bob: 0.0, lean: -side, spread: 3.0, sit: false }, k);
+                let mouth = ((sh.0 .0 + sh.1 .0) / 2.0 + side * 3.0, sh.0 .1 - 6.0);
+                let bell = (mouth.0 + side * 34.0, mouth.1 - 46.0);
+                let blow = c.beats.is_multiple_of(4);
+                thick(fb, mouth.0, mouth.1, bell.0, bell.1, scale(rgb(150, 100, 50), k), 2);
+                fb.fill_rect(bell.0 as i32 - 1, bell.1 as i32 - 1, 4, 3, scale(rgb(210, 170, 90), k));
+                let along = |s: f32| (mouth.0 + (bell.0 - mouth.0) * s, mouth.1 + (bell.1 - mouth.1) * s);
+                arms(fb, sh, (along(0.15), along(0.3)), &WARRIOR, k);
+                if blow {
+                    glow(fb, bell.0, bell.1, 10.0, rgb(255, 210, 120), 0.6 * (1.0 - c.phase));
+                }
+            }
+        }
+        // guitarist; the flute player in Stefania
+        if stefania {
+            let p = Pose { bob: -a.pulse * 1.5, lean: bang * 0.5, spread: 3.0, sit: false };
+            let sh = body(fb, gx, g_feet, &GUITARIST, p, k);
+            let top = sh.0 .1 - 1.5;
+            let hx = (sh.0 .0 + sh.1 .0) / 2.0;
+            let (fx0, fy0, fx1, fy1) = (hx + 2.0, top - 3.0, hx + 17.0, top + 1.0);
+            thick(fb, fx0, fy0, fx1, fy1, scale(rgb(225, 190, 120), k), 1);
+            let at = |s: f32| (fx0 + (fx1 - fx0) * s - 1.0, fy0 + (fy1 - fy0) * s);
+            arms(fb, sh, (at(0.35), at(0.7)), &GUITARIST, k);
+            if a.beat {
+                self.spawn(fx1, fy1, 4, 25.0, rgb(255, 230, 160), 0);
+            }
+        } else if !wild && !tree {
             let kk = if solo { 1.0 } else { k };
             let p = Pose { bob: if loud || solo { -a.pulse * 1.5 } else { 0.0 }, lean: if goodbye { 3.0 } else { bang }, spread: if solo { 5.0 } else { 3.0 }, sit: false };
             let sh = body(fb, gx, g_feet, &GUITARIST, p, kk);
@@ -695,15 +950,24 @@ impl Effect for Concert {
             }
         }
         // bassist
-        {
+        if !wild && !tree {
             let p = Pose { bob: 0.0, lean: if goodbye { 3.0 } else { (t * 2.0).sin() * 1.2 }, spread: 3.0, sit: false };
             let sh = body(fb, 266.0, 133.0, &BASSIST, p, k);
             let (strum, fret) = guitar(fb, 266.0, 119.0, rgb(30, 90, 200), true, 0.0, k);
             let s = (t * TAU / a.period).sin() * 1.5;
             arms(fb, sh, (fret, (strum.0, strum.1 + s)), &BASSIST, k);
         }
-        // singer, at the piano in the ballad
-        if ballad {
+        // singer: under the tree in 1944, at the piano in the ballad
+        if tree {
+            let p = Pose { bob: 0.0, lean: (t * 0.7).sin() * 0.6, spread: 2.0, sit: false };
+            let sh = body(fb, fx, 139.0, &SINGER, p, 1.0);
+            let rise = smoothstep(age / 30.0);
+            let mic = (sh.1 .0 - 3.0, sh.1 .1 - 5.0);
+            let reach = (sh.0 .0 - 4.0 - rise * 6.0, sh.0 .1 + 9.0 - rise * 20.0);
+            arms(fb, sh, (reach, mic), &SINGER, 1.0);
+            fb.fill_rect(mic.0 as i32 - 1, mic.1 as i32 - 2, 2, 3, rgb(40, 40, 40));
+            glow(fb, fx, 120.0, 26.0, rgb(255, 220, 190), 0.3);
+        } else if ballad {
             self.piano(fb, 0.6);
             let p = Pose { bob: 0.0, lean: -1.0 + (t * 1.5).sin() * 0.8, spread: 0.0, sit: true };
             let sh = body(fb, fx, 136.0, &SINGER, p, 1.0);
@@ -730,6 +994,9 @@ impl Effect for Concert {
                 }
             };
             arms(fb, sh, hands, &SINGER, kk);
+            if stefania || (ukraine && goodbye) {
+                bucket_hat(fb, sh, p.lean, rgb(255, 110, 190), kk);
+            }
             // the microphone stand, held like a sceptre
             let (hx, hy) = hands.1;
             let (ex, ey) = match (c.beats / 2) % 4 {
@@ -748,8 +1015,27 @@ impl Effect for Concert {
             glow(fb, sx, sy - 18.0, 26.0, rgb(255, 240, 210), 0.35);
         }
 
+        if stefania {
+            glow(fb, 72.0, FLOOR_EDGE as f32 - 10.0, 18.0, rgb(255, 150, 210), 0.35 + 0.3 * a.pulse);
+            breakdancer(fb, 72.0, FLOOR_EDGE as f32 - 2.0, t, c, 1.0);
+        }
+        if ukraine && (act == Some(Act::Finale) || goodbye) {
+            // sunflowers along the front of the stage, nodding on the beat
+            for (i, x) in (14..WI).step_by(30).enumerate() {
+                let nod = if (i as u32 + c.beats).is_multiple_of(2) { a.pulse * 2.0 } else { 0.0 };
+                let (x, y) = (x as f32, FLOOR_EDGE as f32 - 9.0 + nod);
+                line(fb, x, y, x, FLOOR_EDGE as f32 + 4.0, rgb(40, 140, 40));
+                fb.fill_rect(x as i32 + 1, y as i32 + 6, 3, 2, rgb(50, 160, 50));
+                for k in 0..10 {
+                    let ang = k as f32 * TAU / 10.0 + t * 0.3;
+                    fb.fill_rect((x + ang.cos() * 4.0) as i32, (y + ang.sin() * 4.0) as i32, 2, 2, YELLOW);
+                }
+                ellipse(fb, x + 0.5, y + 0.5, 2.5, 2.5, rgb(110, 60, 20));
+            }
+        }
+
         // pyro: columns of fire on every other beat
-        let pyro = matches!(act, Some(Act::Pyro | Act::Finale)) && !goodbye;
+        let pyro = matches!(act, Some(Act::Pyro | Act::Finale | Act::WildDances)) && !goodbye;
         if pyro && a.beat && c.beats.is_multiple_of(2) {
             let pair = (c.beats / 2) % 2;
             for (i, f) in self.flames.iter_mut().enumerate() {
@@ -779,7 +1065,7 @@ impl Effect for Concert {
             }
             self.flames[i] -= dt / 0.8;
         }
-        if matches!(act, Some(Act::Pyro | Act::Finale)) && a.pulse > 0.2 {
+        if matches!(act, Some(Act::Pyro | Act::Finale | Act::WildDances)) && a.pulse > 0.2 {
             fb.flash(0.04 * a.pulse * self.flames.iter().cloned().fold(0.0, f32::max));
         }
 
@@ -788,12 +1074,12 @@ impl Effect for Concert {
         if finale {
             if a.beat && self.rng.below(2) == 0 {
                 let (x, y) = (60.0 + self.rng.f() * 264.0, 18.0 + self.rng.f() * 40.0);
-                let col = rainbow(self.rng.f());
+                let col = if ukraine { [BLUE, YELLOW][self.rng.below(2) as usize] } else { rainbow(self.rng.f()) };
                 self.spawn(x, y, 40, 70.0, col, 0);
             }
             for _ in 0..3 {
                 if self.bits.len() < 900 {
-                    let col = rainbow(self.rng.f());
+                    let col = if ukraine { [BLUE, YELLOW][self.rng.below(2) as usize] } else { rainbow(self.rng.f()) };
                     let (x, ph) = (self.rng.f() * W as f32, self.rng.f() * TAU);
                     self.bits.push(Bit { x, y: -2.0, vx: 0.0, vy: 18.0 + self.rng.f() * 14.0, age: ph, life: 30.0, col, kind: 1 });
                 }
@@ -828,15 +1114,18 @@ impl Effect for Concert {
             fb.flash((0.25 - age) * 2.0);
         }
         if goodbye {
-            let w = 7.0 * 10.0 * 3.0;
-            dancing_text(fb, "THANK YOU!", (W as f32 - w) / 2.0, 16.0, 3.0, t, a, c.beats, c.pal);
-            let w = font::text_width("GOOD NIGHT", 2, true);
-            font::text(fb, "GOOD NIGHT", (WI - w) / 2, 46, 2, true, rgb(255, 255, 255));
+            // "thank you" in Ukrainian (the font has no Cyrillic), then in English
+            let (big, small) = if ukraine { ("DYAKUYU!", "THANK YOU!") } else { ("THANK YOU!", "GOOD NIGHT") };
+            let w = 7.0 * big.len() as f32 * 3.0;
+            let pal = if ukraine { &self.gold } else { c.pal };
+            dancing_text(fb, big, (W as f32 - w) / 2.0, 16.0, 3.0, t, a, c.beats, pal);
+            let w = font::text_width(small, 2, true);
+            font::text(fb, small, (WI - w) / 2, 46, 2, true, rgb(255, 255, 255));
         }
 
         // the show clock
-        let left = t.clamp(0.0, SECONDS) as u32;
-        let clock = format!("LIVE {:02}:{:02} / {:02}:00", left / 60, left % 60, SECONDS as u32 / 60);
+        let left = t.clamp(0.0, plan.length) as u32;
+        let clock = format!("LIVE {:02}:{:02} / {:02}:00", left / 60, left % 60, plan.length as u32 / 60);
         let w = font::text_width(&clock, 1, false);
         let (x, y) = (WI - w - 8, HI - 11);
         fb.fill_rect(x - 10, y - 2, w + 14, 11, rgb(0, 0, 0));
@@ -855,13 +1144,14 @@ mod tests {
     fn frame(fx: &mut Concert, fb: &mut Fb, a: &mut Audio, t: f32, song: u32) {
         a.update(t, 1.0 / 30.0, false);
         let pal = palette(3);
-        let c = Ctx { t, time: t, dt: 1.0 / 30.0, a, pal: &pal, beats: a.beats, phase: 0.3, name: "", text: "", image: None, song };
+        let skips = fx.skips.unwrap_or(0);
+        let c = Ctx { t, time: t, dt: 1.0 / 30.0, a, pal: &pal, beats: a.beats, phase: 0.3, name: "", text: "", image: None, song, skips };
         fx.draw(fb, &c);
     }
 
     #[test]
     fn acts_follow_the_clock_without_songs() {
-        let (mut fx, mut fb, mut a) = (Concert::new(1), Fb::new(), Audio::new());
+        let (mut fx, mut fb, mut a) = (Concert::new(1, Show::Rock), Fb::new(), Audio::new());
         let mut seen = Vec::new();
         let mut t = 0.0;
         while t < SECONDS {
@@ -876,16 +1166,50 @@ mod tests {
 
     #[test]
     fn songs_set_the_pace_but_the_first_one_does_not_skip_the_opener() {
-        let (mut fx, mut fb, mut a) = (Concert::new(2), Fb::new(), Audio::new());
+        let (mut fx, mut fb, mut a) = (Concert::new(2, Show::Rock), Fb::new(), Audio::new());
         frame(&mut fx, &mut fb, &mut a, 1.0, 0);
         frame(&mut fx, &mut fb, &mut a, 5.0, 1); // the first song arrives
         assert_eq!(fx.act, 0);
+        // N moves on at once, even in the opening seconds
+        let pal = palette(3);
+        let c = Ctx { t: 6.0, time: 6.0, dt: 1.0 / 30.0, a: &a, pal: &pal, beats: 0, phase: 0.0, name: "", text: "", image: None, song: 1, skips: 1 };
+        fx.draw(&mut fb, &c);
+        assert_eq!(fx.act, 1, "N skips to the next act");
+        frame(&mut fx, &mut fb, &mut a, 7.0, 1);
+        assert_eq!(fx.act, 1);
+        fx.act = 0;
         frame(&mut fx, &mut fb, &mut a, 130.0, 2);
         assert_eq!(fx.act, 1, "a new song, a new act");
         // a long song: no clock change after the usual slot once songs are known
-        frame(&mut fx, &mut fb, &mut a, 130.0 + SLOT + 10.0, 2);
+        frame(&mut fx, &mut fb, &mut a, 130.0 + ROCK.slot + 10.0, 2);
         assert_eq!(fx.act, 1);
-        frame(&mut fx, &mut fb, &mut a, FINALE_FROM + 1.0, 2);
-        assert_eq!(fx.act, FINALE, "the finale closes the show whatever plays");
+        frame(&mut fx, &mut fb, &mut a, ROCK.finale_from + 1.0, 2);
+        assert_eq!(fx.act, 7, "the finale closes the show whatever plays");
+    }
+
+    #[test]
+    fn the_ukraine_show_plays_its_three_winners_then_the_finale() {
+        let (mut fx, mut fb, mut a) = (Concert::new(3, Show::Ukraine), Fb::new(), Audio::new());
+        let mut seen = Vec::new();
+        let mut t = 0.0;
+        while t < UKRAINE_SECONDS {
+            frame(&mut fx, &mut fb, &mut a, t, 0);
+            let act = UKRAINE.acts[fx.act];
+            if seen.last() != Some(&act) {
+                seen.push(act);
+            }
+            t += 1.0;
+        }
+        assert_eq!(seen, vec![Act::WildDances, Act::Tree, Act::Stefania, Act::Finale]);
+        // with songs: the three songs set the pace and the finale still comes at the end
+        let (mut fx, mut fb, mut a) = (Concert::new(4, Show::Ukraine), Fb::new(), Audio::new());
+        frame(&mut fx, &mut fb, &mut a, 3.0, 1);
+        frame(&mut fx, &mut fb, &mut a, 180.0, 2);
+        frame(&mut fx, &mut fb, &mut a, 360.0, 3);
+        assert_eq!(UKRAINE.acts[fx.act], Act::Stefania);
+        frame(&mut fx, &mut fb, &mut a, 545.0, 3);
+        assert_eq!(UKRAINE.acts[fx.act], Act::Stefania, "Stefania plays to its end");
+        frame(&mut fx, &mut fb, &mut a, UKRAINE.finale_from + 1.0, 3);
+        assert_eq!(UKRAINE.acts[fx.act], Act::Finale);
     }
 }

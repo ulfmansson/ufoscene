@@ -1,0 +1,11 @@
+# name: ufoscene.net · Ukraine at Eurovision
+# description: Ukraine's three Eurovision winners, for the 10-minute pixel show on ufoscene.net (press E). In this order.
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+# The show (E) plays these in order on Spotify; every new song starts the next act on stage.
+
+# 2004, Istanbul: fire, big drums and trembita horns
+Ruslana - Wild Dances
+# 2016, Stockholm: a tree grows across the dark stage
+Jamala - 1944
+# 2022, Turin: embroidery, a flute, a breakdancer and a pink bucket hat
+Kalush Orchestra - Stefania

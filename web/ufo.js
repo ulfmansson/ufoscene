@@ -67,8 +67,8 @@ function markCurrent() {
 }
 const fromHash = parseInt(location.hash.slice(1), 10);
 if (fromHash >= 1 && fromHash <= demos.length) ex.ufo_set_demo(demo, fromHash - 1);
-// #concert in the address: the first Start opens with the concert (see concert() below)
-let concertOnStart = location.hash === '#concert';
+// #concert or #ukraine in the address: the first Start opens with that show (see concert() below)
+let showOnStart = { '#concert': 'rock', '#ukraine': 'ukraine' }[location.hash] || null;
 
 const juke = $('juke');
 juke.value = localStorage.getItem('ufo.juke') || '2'; // shuffle unless the visitor chose otherwise
@@ -278,10 +278,10 @@ function start() {
   // from 23 to 28 December, the first start of the evening opens with the Christmas scene
   if (!christmasShown && christmasWeek(new Date())) ex.ufo_christmas(demo);
   christmasShown = true;
-  if (concertOnStart) {
-    concertOnStart = false;
-    ex.ufo_concert(demo);
-    playSetlist();
+  if (showOnStart) {
+    const show = showOnStart;
+    showOnStart = null;
+    beginShow(show);
   }
   panel.style.display = 'none';
   document.body.classList.add('running');
@@ -301,45 +301,61 @@ $('go').addEventListener('click', start);
 
 // ------------------------------------------------------------------ the concert
 
-// C, the Concert button, #concert in the address or ufo.concert() in the console: half an
-// hour of live concert on a pixel stage (demo/src/fx/concert.rs), then the demos carry on.
-// With Spotify connected (Premium) the setlist in playlists/concert.txt starts in order on
-// the Spotify app, and every new song brings the next act. C again ends the concert.
+// Two shows on a pixel stage (demo/src/fx/concert.rs), then the demos carry on:
+// C: half an hour of rock concert (the setlist in playlists/concert.txt).
+// E: ten minutes of Ukraine's three Eurovision winners (playlists/ukraine.txt).
+// Also the panel's buttons, #concert / #ukraine in the address, or ufo.concert('ukraine').
+// With Spotify connected (Premium) the show's setlist starts in order on the Spotify app,
+// and every new song brings the next act. The same key again ends the show.
+const SHOWS = {
+  rock: { id: 0, setlist: 'playlists/concert.txt', key: 'C', name: 'Concert' },
+  ukraine: { id: 1, setlist: 'playlists/ukraine.txt', key: 'E', name: 'Ukraine at Eurovision' },
+};
+let currentShow = null;
 const inConcert = () => ex.ufo_concert_left(demo) > 0;
 
-async function playSetlist() {
+async function playSetlist(show) {
+  const { setlist, key, name } = SHOWS[show];
   if (!spotify.connected()) {
-    say('Concert on! Put the music on, or connect Spotify (G) to start the setlist from here.', 9000);
+    say(`${name} on! Put the music on, or connect Spotify (G) to start the setlist from here.`, 9000);
     return;
   }
-  say('Concert on! Finding the setlist in Spotify…', 5000);
+  say(`${name} on! Finding the setlist in Spotify…`, 5000);
   try {
-    const text = await (await fetch('playlists/concert.txt')).text();
-    const { name, songs } = spotify.parsePlaylist(text, 'The concert');
+    const text = await (await fetch(setlist)).text();
+    const { name: title, songs } = spotify.parsePlaylist(text, name);
     const hits = (await Promise.all(songs.map((s) => spotify.findTrack(s).catch(() => null)))).filter(Boolean);
     if (!hits.length) throw new Error('none of its songs were found');
     await spotify.play(hits.map((h) => h.uri), { shuffle: false });
-    say(`${name}: ${hits.length} songs, in order. Enjoy the show!`, 6000);
+    say(`${title}: ${hits.length} songs, in order. Enjoy the show!`, 6000);
   } catch (e) {
-    if (e.status === 404) say('Open the Spotify app (or open.spotify.com) and play anything once, then press C twice.', 9000);
+    if (e.status === 404) say(`Open the Spotify app (or open.spotify.com) and play anything once, then press ${key} twice.`, 9000);
     else if (e.status === 403) say('Starting songs from here needs Spotify Premium. Start the music in Spotify yourself.', 9000);
     else say(`Could not start the setlist (${e.message}).`, 8000);
   }
 }
 
-function concert() {
-  if (inConcert()) {
+function beginShow(show) {
+  currentShow = show;
+  ex.ufo_concert(demo, SHOWS[show].id);
+  playSetlist(show);
+}
+
+/** Start `show` ('rock' or 'ukraine'); the same show again ends it, the other one takes over. */
+function concert(show = 'rock') {
+  if (!SHOWS[show]) return;
+  if (inConcert() && currentShow === show) {
     ex.ufo_set_demo(demo, ex.ufo_current_demo(demo));
-    say('Concert over: back to the demos', 3000);
+    say(`${SHOWS[show].name} over: back to the demos`, 3000);
     return;
   }
-  concertOnStart = false; // started here, so Start must not start it again
+  showOnStart = null; // started here, so Start must not start it again
   if (panel.style.display !== 'none') start();
-  ex.ufo_concert(demo);
-  playSetlist();
+  beginShow(show);
 }
 window.ufo.concert = concert;
-$('concert-go').addEventListener('click', concert);
+$('concert-go').addEventListener('click', () => concert('rock'));
+$('ukraine-go').addEventListener('click', () => concert('ukraine'));
 
 // Share: the system share sheet where there is one, otherwise copy the link. A page on this
 // computer (127.0.0.1) shares https://ufoscene.net instead, since nobody else can open it.
@@ -514,7 +530,8 @@ window.addEventListener('keydown', (e) => {
   } else if (k === 'n') ex.ufo_next_scene(demo);
   else if (k === 'h') ex.ufo_toggle_hud(demo);
   else if (k === 'q') ex.ufo_show_qr(demo);
-  else if (k === 'c') concert();
+  else if (k === 'c') concert('rock');
+  else if (k === 'e') concert('ukraine');
   else if (k === 't') {
     setTv(!tvmode.checked);
     say(tvmode.checked ? 'TV mode on: steady 30 fps, no scanlines' : 'TV mode off: 60 fps with scanlines', 2500);
