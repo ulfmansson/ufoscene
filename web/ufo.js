@@ -309,7 +309,7 @@ $('go').addEventListener('click', start);
 // and every new song brings the next act. The same key again ends the show.
 const SHOWS = {
   rock: { id: 0, setlist: 'playlists/concert.txt', key: 'C', name: 'Concert' },
-  ukraine: { id: 1, setlist: 'playlists/ukraine.txt', key: 'E', name: 'Ukraine at Eurovision' },
+  ukraine: { id: 1, setlist: 'playlists/ukraine.txt', key: 'U', name: 'Ukraine at Eurovision' },
 };
 let currentShow = null;
 const inConcert = () => ex.ufo_concert_left(demo) > 0;
@@ -531,7 +531,7 @@ window.addEventListener('keydown', (e) => {
   else if (k === 'h') ex.ufo_toggle_hud(demo);
   else if (k === 'q') ex.ufo_show_qr(demo);
   else if (k === 'c') concert('rock');
-  else if (k === 'e') concert('ukraine');
+  else if (k === 'u') concert('ukraine'); // U-F-O also starts the flyby egg
   else if (k === 't') {
     setTv(!tvmode.checked);
     say(tvmode.checked ? 'TV mode on: steady 30 fps, no scanlines' : 'TV mode off: 60 fps with scanlines', 2500);

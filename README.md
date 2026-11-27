@@ -157,7 +157,7 @@ back into BlackHole, which would loop the sound.
 | **H** | info overlay (demo, part, palette, BPM, levels) |
 | **Q** | a QR code to <https://ufoscene.net> with #ufoscene, for 10 seconds, so guests can open it on their phones |
 | **C** | the 30-minute pixel concert (below); **C** again ends it |
-| **E** | Ukraine at Eurovision, a 10-minute pixel show (below); **E** again ends it |
+| **U** | Ukraine at Eurovision, a 10-minute pixel show (below); **U** again ends it |
 | **F** | fullscreen (or double-click; double-tap on a phone) |
 | **P** / **Esc** | pause everything (demo, radio, Spotify) and show the settings panel; **P** again carries on |
 | **G** | setup guide |
@@ -188,7 +188,7 @@ microphone), so the band plays along. The band on stage is made up; it plays wha
 
 ### Ukraine at Eurovision
 
-Press **E** (or **💙💛 Ukraine at Eurovision**, or `#ukraine`) for ten minutes of Ukraine's
+Press **U** (or **💙💛 Ukraine at Eurovision**, or `#ukraine`) for ten minutes of Ukraine's
 three Eurovision winners on the same stage, one act each, staged after their Eurovision
 performances:
 
@@ -201,7 +201,7 @@ performances:
 - **The finale**: the flag waving on the LED wall, *12 POINTS*, sunflowers along the stage,
   blue and yellow fireworks and confetti, and *DYAKUYU!* ("thank you") at the bow
 
-With Spotify connected, **E** plays [`web/playlists/ukraine.txt`](web/playlists/ukraine.txt)
+With Spotify connected, **U** plays [`web/playlists/ukraine.txt`](web/playlists/ukraine.txt)
 in order. The performers are the same made-up pixel band; only the staging nods to the
 originals.
 
