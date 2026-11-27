@@ -35,7 +35,7 @@ fn main() {
         for f in 0..frames {
             let time = 20.0 + f as f32 / 60.0;
             a.update(time, 1.0 / 60.0, false);
-            let c = Ctx { t: f as f32 / 60.0, time, dt: 1.0 / 60.0, a: &a, pal: &pal, beats: f as u32 / 29, phase: 0.0, name: "UFO", text: "HEJ HEJ   ", image: None, song: 0 };
+            let c = Ctx { t: f as f32 / 60.0, time, dt: 1.0 / 60.0, a: &a, pal: &pal, beats: f as u32 / 29, phase: 0.0, name: "UFO", text: "HEJ HEJ   ", image: None, song: 0, skips: 0 };
             e.draw(&mut fb, &c);
         }
         let ms = start.elapsed().as_secs_f64() * 1000.0 / frames.max(1) as f64;
