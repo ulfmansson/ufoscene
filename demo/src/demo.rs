@@ -28,10 +28,14 @@ const QR_SECONDS: f32 = 10.0;
 /// How often the "share UFO" band shows (seconds), and for how long.
 const PROMO_EVERY: f32 = 420.0;
 const PROMO_LEN: f32 = 8.0;
-const SHARE_LINES: [&str; 5] = [
+/// Asks the guests for their party photos, under the QR code and now and then in the band.
+const PHOTO_LINE: &str = "PARTY PICS? POST THEM WITH #UFOSCENE!";
+const SHARE_LINES: [&str; 7] = [
     "LIKE IT? SHARE UFOSCENE.NET WITH A FRIEND!",
+    PHOTO_LINE,
     "TELL YOUR FRIENDS ABOUT UFOSCENE.NET!",
     "DELA UFOSCENE.NET MED DINA VÄNNER!",
+    "DELA DINA FESTBILDER MED #UFOSCENE!",
     "SPREAD THE WORD - #UFOSCENE",
     "SHOW UFOSCENE.NET AT YOUR NEXT PARTY!",
 ];
@@ -575,6 +579,8 @@ impl Demo {
         let line = format!("SCAN ME - {SITE} - SHARE WITH #UFOSCENE");
         let lw = font::text_width(&line, 1, false);
         font::text(&mut self.fb, &line, (WI - lw) / 2, ty as i32 + 28, 1, false, rgb(230, 230, 230));
+        let pw = font::text_width(PHOTO_LINE, 1, true);
+        font::text(&mut self.fb, PHOTO_LINE, (WI - pw) / 2, ty as i32 + 39, 1, true, self.pals[self.pal_idx].hi);
     }
 
     fn transition(&mut self, p: f32) {
@@ -765,6 +771,18 @@ mod tests {
         assert_eq!(github, 2, "the GitHub address about every 20 minutes");
         assert!(HOME.chars().all(|c| crate::font::glyph(c) != [0; 7]));
         assert!(SHARE_LINES.iter().flat_map(|l| l.chars()).all(|c| c == ' ' || crate::font::glyph(c) != [0; 7]));
+    }
+
+    #[test]
+    fn guests_are_asked_for_party_photos_under_the_qr_code_and_in_the_band() {
+        assert!(crate::font::text_width(PHOTO_LINE, 1, true) <= WI - 8, "fits under the QR code");
+        let shown: Vec<&str> = (0..3600)
+            .filter_map(|s| promo_at(s as f32))
+            .filter(|p| p.1 < 1.0 && p.0 % 3 != 2)
+            .map(|p| SHARE_LINES[p.0 as usize % SHARE_LINES.len()])
+            .collect();
+        assert_eq!(shown.first().copied(), Some(SHARE_LINES[0]));
+        assert!(shown.contains(&PHOTO_LINE), "the photo ask comes within the first hour: {shown:?}");
     }
 
     #[test]

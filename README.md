@@ -1,6 +1,6 @@
 # ufoscene.net — a hymn to the Swedish demo scene
 
-**Live at <https://ufoscene.net>** · share it with **#ufoscene**
+**Live at <https://ufoscene.net>** · share it, and your party photos, with **#ufoscene**
 
 **Help Ukraine 🇺🇦** at <https://ukraine.ufoscene.net> (also <https://pi.ufoscene.net>): donate
 to the defence of Ukraine and get a Raspberry Pi running ufoscene. The **Help Ukraine** link in
@@ -92,7 +92,8 @@ retro night, a release party, an office party or a bar.
 - **A party playlist in a minute.** Let the guests write their wishes into a text file, one
   `Artist - Title` per line, and UFO turns it into a Spotify playlist.
 - **Easy to pass on.** Press **Q** and a QR code to ufoscene.net fills the screen for ten
-  seconds, with **#ufoscene** dancing underneath.
+  seconds, with **#ufoscene** dancing underneath and a line asking the guests to post their
+  party photos with **#ufoscene**. Now and then the share band at the top asks for them too.
 - **One key for the DJ.** **Space** skips to the next song, **B** goes back, **R** jumps to a
   random demo, and **J** switches to shuffle.
 - **Runs all night.** Fullscreen with **F**, the mouse pointer hides, and **TV mode** (**T**)
