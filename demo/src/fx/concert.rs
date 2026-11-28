@@ -345,6 +345,9 @@ pub struct Concert {
     act_t0: f32,
     song: Option<u32>,
     skips: Option<u32>,
+    /// When ← last went back an act (-1: never). After the finale's time, it holds the
+    /// finale off.
+    back_at: f32,
     /// Song names arrive, so they set the pace instead of the clock.
     by_song: bool,
     fans: Vec<Fan>,
@@ -374,7 +377,14 @@ impl Concert {
         }
         let dots = (0..70).map(|_| (rng.f(), 6.0 + rng.f() * 200.0, rng.f())).collect();
         let gold = Palette::cosine([0.95, 0.85, 0.45], [0.05, 0.15, 0.4], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0]);
-        Concert { show, act: 0, act_t0: 0.0, song: None, skips: None, by_song: false, fans, bits: Vec::new(), flames: [0.0; 4], dots, gold, rng, stage: Fb::new(), cam: Camera::new(seed) }
+        Concert { show, act: 0, act_t0: 0.0, song: None, skips: None, back_at: -1.0, by_song: false, fans, bits: Vec::new(), flames: [0.0; 4], dots, gold, rng, stage: Fb::new(), cam: Camera::new(seed) }
+    }
+
+    /// ← during a show: back to the act before (the first act starts again).
+    fn prev_act(&mut self, t: f32) {
+        self.act = self.act.saturating_sub(1);
+        self.act_t0 = t;
+        self.back_at = t;
     }
 
     fn next_act(&mut self, t: f32) {
@@ -387,10 +397,15 @@ impl Concert {
         self.act_t0 = t;
     }
 
-    /// Which act is on at `t`, moving on with the songs (or the clock) and on every N.
+    /// Which act is on at `t`, moving on with the songs (or the clock), on every N and →,
+    /// and back on every ←.
     fn follow(&mut self, t: f32, song: u32, skips: u32) {
-        if self.skips.is_some_and(|s| s != skips) {
-            self.next_act(t);
+        if let Some(s) = self.skips {
+            // every press counts, even two in one frame
+            let d = (skips.wrapping_sub(s) as i32).clamp(-16, 16);
+            for _ in 0..d.unsigned_abs() {
+                if d > 0 { self.next_act(t) } else { self.prev_act(t) }
+            }
         }
         self.skips = Some(skips);
         let p = self.show.plan();
@@ -424,7 +439,8 @@ impl Concert {
         } else if age > longest {
             self.next_act(t);
         }
-        if t > p.finale_from && self.act != finale {
+        // the finale closes the show whatever plays, unless ← went back from it
+        if t > p.finale_from && self.act != finale && self.back_at < p.finale_from {
             self.act = finale;
             self.act_t0 = t;
         }
@@ -1495,6 +1511,31 @@ mod tests {
             t += 2.0;
         }
         assert_eq!(seen, vec![0, 1, 2, 3, 4, 5, 6, 7], "every act once, the finale last");
+    }
+
+    #[test]
+    fn the_arrows_step_through_the_acts_both_ways() {
+        let (mut fx, mut fb, mut a) = (Concert::new(7, Show::Rock), Fb::new(), Audio::new());
+        let pal = palette(3);
+        let mut at = |fx: &mut Concert, t: f32, skips: u32| {
+            a.update(t, 1.0 / 30.0, false);
+            let c = Ctx { t, time: t, dt: 1.0 / 30.0, a: &a, pal: &pal, beats: 0, phase: 0.0, name: "", text: "", image: None, song: 0, skips };
+            fx.draw(&mut fb, &c);
+            fx.act
+        };
+        assert_eq!(at(&mut fx, 20.0, 0), 0);
+        assert_eq!(at(&mut fx, 21.0, 1), 1, "→ the next act");
+        assert_eq!(at(&mut fx, 22.0, 2), 2);
+        assert_eq!(at(&mut fx, 23.0, 1), 1, "← the act before");
+        assert_eq!(at(&mut fx, 24.0, 0), 0);
+        assert_eq!(at(&mut fx, 24.5, 3), 3, "three presses in one frame, three acts");
+        assert_eq!(at(&mut fx, 24.7, 0), 0);
+        assert_eq!(at(&mut fx, 25.0, u32::MAX), 0, "← on the first act starts it again");
+        assert_eq!(fx.act_t0, 25.0);
+        let finale = ROCK.acts.len() - 1;
+        assert_eq!(at(&mut fx, ROCK.finale_from + 5.0, u32::MAX), finale, "the finale still comes on time");
+        assert_eq!(at(&mut fx, ROCK.finale_from + 6.0, u32::MAX - 1), finale - 1, "← goes back from the finale");
+        assert_eq!(at(&mut fx, ROCK.finale_from + 7.0, u32::MAX - 1), finale - 1, "and stays there");
     }
 
     #[test]

@@ -76,7 +76,8 @@ pub struct Demo {
     concert_len: f32,
     /// New songs so far (`set_track`), handed to effects as `Ctx::song`.
     songs: u32,
-    /// N presses during concerts, handed to effects as `Ctx::skips`.
+    /// N and → presses during concerts minus ← presses (wrapping), handed to effects as
+    /// `Ctx::skips`.
     skips: u32,
     t: f32,
     last: Option<f32>,
@@ -263,6 +264,24 @@ impl Demo {
         self.set_demo(self.demo + self.recipes.len() - 1);
     }
 
+    /// → (and the remote's next): in a show the next act, otherwise the next demo.
+    pub fn forward(&mut self) {
+        if self.in_concert {
+            self.skips = self.skips.wrapping_add(1);
+        } else {
+            self.next_demo();
+        }
+    }
+
+    /// ← (and the remote's previous): in a show the act before, otherwise the demo before.
+    pub fn back(&mut self) {
+        if self.in_concert {
+            self.skips = self.skips.wrapping_sub(1);
+        } else {
+            self.prev_demo();
+        }
+    }
+
     pub fn random_demo(&mut self) {
         let n = self.recipes.len() as u32;
         let i = (self.demo as u32 + 1 + self.rng.below(n - 1)) % n;
@@ -306,7 +325,7 @@ impl Demo {
         }
         if self.in_concert {
             // N during the concert: on to the next act
-            self.skips += 1;
+            self.skips = self.skips.wrapping_add(1);
             return;
         }
         if self.intro {
@@ -740,6 +759,27 @@ mod tests {
         assert_eq!(d.state().0, 7, "then the demo that was on starts again");
         assert_ne!(d.state().2, "LIVE CONCERT");
         assert!(d.recipes.iter().all(|r| r.parts.iter().all(|p| d.defs[p.0].name != "LIVE CONCERT")), "never inside a demo");
+    }
+
+    #[test]
+    fn the_arrows_step_through_a_show_and_through_the_demos_otherwise() {
+        let mut d = Demo::new();
+        let mut t = 10.0;
+        d.set_demo(7);
+        d.forward();
+        assert_eq!(d.state().0, 8, "→ outside a show: the next demo");
+        d.back();
+        assert_eq!(d.state().0, 7, "← outside a show: the demo before");
+        d.concert(0);
+        run(&mut d, &mut t, 1.0);
+        let skips = d.skips;
+        d.forward();
+        d.forward();
+        d.back();
+        run(&mut d, &mut t, 1.0);
+        assert_eq!(d.skips, skips.wrapping_add(1));
+        assert_eq!(d.state().2, "LIVE CONCERT", "the arrows keep the show on");
+        assert_eq!(d.state().0, 7);
     }
 
     #[test]

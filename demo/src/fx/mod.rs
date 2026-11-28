@@ -46,7 +46,8 @@ pub struct Ctx<'a> {
     /// Goes up by one every time the page says a new song started; effects that follow
     /// the songs watch it change.
     pub song: u32,
-    /// Goes up by one on every N during a concert: on to the next act.
+    /// Goes up by one on every N or → during a concert (on to the next act) and down by one
+    /// on every ← (back to the act before), wrapping: effects watch the difference.
     pub skips: u32,
 }
 

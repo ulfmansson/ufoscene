@@ -398,8 +398,9 @@ impl Player {
     fn handle(&mut self, c: remote::Command, now: f64) {
         let arg = &c.arg;
         match c.cmd.as_str() {
-            "next" => self.demo.next_demo(),
-            "prev" => self.demo.prev_demo(),
+            // in a show the next or previous act, otherwise the next or previous demo
+            "next" => self.demo.forward(),
+            "prev" => self.demo.back(),
             "random" => self.demo.random_demo(),
             "scene" => self.demo.next_part(),
             "hud" => self.demo.toggle_hud(),
