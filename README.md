@@ -149,7 +149,7 @@ back into BlackHole, which would loop the sound.
 | Key | |
 |-----|-|
 | **Space** | start; while running: next song in Spotify or next radio station (**B** previous) |
-| **← →** | previous / next demo |
+| **← →** | previous / next demo; in a show, the previous / next act |
 | **N** | next part |
 | **R** | random demo |
 | **J** | after a demo: play the next, repeat it, or shuffle |
@@ -180,7 +180,8 @@ The show runs in acts: the doors open in the dark, then a clap-along, a light sh
 disco with a mirror ball, a stadium wave, a guitar solo, a piano ballad and a finale with
 fireworks and confetti, before the band takes a bow. With song names (Spotify, Last.fm or the
 radio) every new song starts the next act, and the artist's photo shows on the LED wall;
-without them the acts change every few minutes. **N** skips to the next act.
+without them the acts change every few minutes. **N** or **→** skips to the next act, **←** goes
+back one.
 
 The show is filmed like a concert broadcast: the camera cuts on the beat between the singer,
 the guitarist, the drums, the LED wall and the crowd, flies over the stage between shots

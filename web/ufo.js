@@ -642,8 +642,9 @@ window.addEventListener('keydown', (e) => {
     setTv(!tvmode.checked);
     say(tvmode.checked ? 'TV mode on: steady 30 fps, no scanlines' : 'TV mode off: 60 fps with scanlines', 2500);
   }
-  else if (k === 'arrowright') ex.ufo_next_demo(demo);
-  else if (k === 'arrowleft') ex.ufo_prev_demo(demo);
+  // in a show: the next or the previous act; otherwise the next or the previous demo
+  else if (k === 'arrowright') ex.ufo_forward(demo);
+  else if (k === 'arrowleft') ex.ufo_back(demo);
   else if (k === 'r') ex.ufo_random_demo(demo);
   else if (k === 'p' || k === 'escape') togglePanel();
   else if (k === 'g') guide?.open(0);

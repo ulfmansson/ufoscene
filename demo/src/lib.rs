@@ -126,6 +126,18 @@ pub extern "C" fn ufo_prev_demo(d: *mut Demo) {
     unsafe { (*d).prev_demo() }
 }
 
+/// → on the page: the next act in a show, otherwise the next demo.
+#[unsafe(no_mangle)]
+pub extern "C" fn ufo_forward(d: *mut Demo) {
+    unsafe { (*d).forward() }
+}
+
+/// ← on the page: the act before in a show, otherwise the demo before.
+#[unsafe(no_mangle)]
+pub extern "C" fn ufo_back(d: *mut Demo) {
+    unsafe { (*d).back() }
+}
+
 #[unsafe(no_mangle)]
 pub extern "C" fn ufo_random_demo(d: *mut Demo) {
     unsafe { (*d).random_demo() }
