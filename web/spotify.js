@@ -188,28 +188,48 @@ export async function picture(url) {
 
 /**
  * Lines of a playlist file: "Artist - Title", a Spotify track link/URI, or
- * "# name: My playlist". Blank lines and other "#" lines are skipped.
+ * "# name: My playlist". "# album: Title" names a record that plays the same songs in the
+ * same order (a live album, say), to play whole instead. Blank lines and other "#" lines
+ * are skipped.
  */
 export function parsePlaylist(text, fallbackName) {
   let name = fallbackName;
   let isPublic = false;
   let description = '';
+  let album = '';
   const songs = [];
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line) continue;
-    const m = line.match(/^#\s*(name|public|description)\s*:\s*(.+)$/i);
+    const m = line.match(/^#\s*(name|public|description|album)\s*:\s*(.+)$/i);
     if (m) {
       const [, key, value] = m;
       if (/^name$/i.test(key)) name = value.trim();
       else if (/^public$/i.test(key)) isPublic = /^(yes|true|1)$/i.test(value.trim());
+      else if (/^album$/i.test(key)) album = value.trim();
       else description = value.trim();
       continue;
     }
     if (line.startsWith('#')) continue;
     songs.push(line);
   }
-  return { name, songs, public: isPublic, description };
+  return { name, songs, public: isPublic, description, album };
+}
+
+/**
+ * Look up a record by `artist` and `title`: { uri, label, tracks }, or null when Spotify has
+ * no record by that artist with that title (case and punctuation aside).
+ */
+export async function findAlbum(artist, title, call = api) {
+  const norm = (s) => s.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
+  for (const q of [`album:${title} artist:${artist}`, `${artist} ${title}`]) {
+    const j = await call(`/search?${new URLSearchParams({ q, type: 'album', limit: '5' })}`);
+    const a = (j?.albums?.items || []).find(
+      (x) => norm(x.name) === norm(title) && x.artists.some((p) => norm(p.name) === norm(artist)),
+    );
+    if (a) return { uri: a.uri, label: `${a.artists.map((p) => p.name).join(', ')} - ${a.name}`, tracks: a.total_tracks };
+  }
+  return null;
 }
 
 /**

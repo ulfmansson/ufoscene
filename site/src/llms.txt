@@ -6,7 +6,7 @@ UFO is written in Rust and compiled to WebAssembly without any crates. It render
 
 Music can come from built-in 80s & 90s internet radio (no setup), a shared Chrome/Edge tab or the screen, the microphone, or a loopback device such as BlackHole on a Mac. With no sound it runs on a 125 BPM autopilot. Optional Last.fm or Spotify connections show the artist and song in the demo, with artist photos worked into the graphics. Cast the tab to a TV for a party.
 
-Keys: ←/→ change demo, R a random demo, P opens the panel (and pauses), G the setup guide, Space/B the next/previous song or station, F fullscreen, T TV mode, C a 30-minute pixel concert. A link such as https://ufoscene.net/#42 opens demo 42.
+Keys: ←/→ change demo, R a random demo, P opens the panel (and pauses), G the setup guide, Space/B the next/previous song or station, F fullscreen, T TV mode, C a 30-minute pixel concert (Queen's songs), U Ukraine at Eurovision (10 minutes), K Kite at Dalhalla (87 minutes, as long as Kite's record Live At Dalhalla). A link such as https://ufoscene.net/#42 opens demo 42; https://ufoscene.net/queen, https://ufoscene.net/ukraine and https://ufoscene.net/kite go straight into a show.
 
 ## Pages
 

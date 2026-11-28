@@ -111,7 +111,7 @@ pub fn all() -> Vec<Def> {
 /// Scenes for special days and the concert, kept out of `all()` so the 100 demos never
 /// change. The demo player adds them after the recipes are built.
 pub fn seasonal() -> Vec<Def> {
-    vec![christmas::def(), concert::def(), concert::ukraine_def(), concert::secret_def()]
+    vec![christmas::def(), concert::def(), concert::ukraine_def(), concert::secret_def(), concert::kite_def()]
 }
 
 // ---------------------------------------------------------------- palettes

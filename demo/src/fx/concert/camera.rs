@@ -148,6 +148,8 @@ fn aims(act: Option<Act>) -> &'static [Aim] {
         Some(Act::Tree) => &[Stage, Stage, Wall, Singer, Crowd],
         Some(Act::Stefania) => &[Singer, Singer, Guitar, LeftWing, Wall, Crowd, Stage],
         Some(Act::Finale) => &[Stage, Stage, Lights, Crowd, Floor, Singer, Wall, Drums],
+        // Kite's acts play on the quarry stage, which the camera does not film
+        Some(_) => &[Stage, Crowd],
     }
 }
 

@@ -158,6 +158,7 @@ back into BlackHole, which would loop the sound.
 | **Q** | a QR code to <https://ufoscene.net> with #ufoscene, for 10 seconds, so guests can open it on their phones |
 | **C** | the 30-minute pixel concert (below); **C** again ends it |
 | **U** | Ukraine at Eurovision, a 10-minute pixel show (below); **U** again ends it |
+| **K** | Kite at Dalhalla, 87 minutes, as long as the record (below); **K** again ends it |
 | **F** | fullscreen (or double-click; double-tap on a phone) |
 | **P** / **Esc** | pause everything (demo, radio, Spotify) and show the settings panel; **P** again carries on |
 | **G** | setup guide |
@@ -165,12 +166,13 @@ back into BlackHole, which would loop the sound.
 On a phone or tablet there are no keys: tap the running demo to pause it and open the settings,
 and **Start** carries on.
 
-`http://127.0.0.1:8100/#42` opens demo 42.
+`http://127.0.0.1:8100/#42` opens demo 42. Each show has an address of its own that goes
+straight into it, no Start needed: `/queen` (or `/concert`), `/ukraine` and `/kite`, such as
+<https://ufoscene.net/kite>; `#queen`, `#ukraine` and `#kite` do the same.
 
 ## The 30-minute concert
 
-Press **C** (or **🎸 Concert** in the panel, or open `http://127.0.0.1:8100/#concert` and press
-Start) for half an hour of live concert on a pixel stage: a four-piece band under a lighting
+Press **C** (or **🎸 Concert** in the panel, or open <https://ufoscene.net/queen>) for half an hour of live concert on a pixel stage: a four-piece band under a lighting
 truss, an LED wall, speaker stacks and a crowd that jumps, claps and holds up lighters to the
 music. A show clock counts to 30:00, then the demos carry on.
 
@@ -197,7 +199,7 @@ microphone), so the band plays along. The band on stage is made up; it plays wha
 
 ### Ukraine at Eurovision
 
-Press **U** (or **💙💛 Ukraine at Eurovision**, or `#ukraine`) for ten minutes of Ukraine's
+Press **U** (or **💙💛 Ukraine at Eurovision**, or <https://ufoscene.net/ukraine>) for ten minutes of Ukraine's
 three Eurovision winners on the same stage, one act each, staged after their Eurovision
 performances:
 
@@ -216,6 +218,29 @@ result right of it: *1ST PLACE*, Eurovision, the year and the points (280, 534 a
 With Spotify connected, **U** plays [`web/playlists/ukraine.txt`](web/playlists/ukraine.txt)
 in order. The performers are the same made-up pixel band; only the staging nods to the
 originals.
+
+### Kite at Dalhalla
+
+Press **K** (or **🪁 Kite at Dalhalla**, or <https://ufoscene.net/kite>) for a show inspired by
+the Swedish synth duo Kite's homecoming concert in the Dalhalla quarry near Rättvik on
+2 September 2023, exactly as long as the record of that night, *Live At Dalhalla* (2026):
+1:27:10, 17 songs. It has a stage of its own: pale limestone walls with pines along the rim, a
+lake between the stage and the terraces that mirrors the lights, and the September sky going
+from dusk to stars during the show. A singer with a microphone in hand and a synth player
+behind a rig of keyboards are on stage.
+
+Each song is an act of its own, named in the corner as it starts: white beams fanning up into
+the evening for *Remember Me*, lasers over the water, the quarry walls flooded in colour,
+searchlights into the night, strobes, a lone spot and phone lights for *Don't Take The Light
+Away*, an empty stage and wandering lights for the two songs played from tape, eight red
+signal flares burning on the rock face for *Glassy Eyes* (as on the night), and fireworks over
+the rim for *Nocturne*. At the end the duo comes to the front: *TACK DALHALLA!*
+
+With Spotify connected, **K** plays the album *Live At Dalhalla* itself, in order (the setlist
+[`web/playlists/kite-dalhalla.txt`](web/playlists/kite-dalhalla.txt) names it with
+`# album:`, and falls back to its songs one by one). Every new song starts the next act;
+without song names the acts follow the record's own track lengths, so starting the record and
+the show together keeps them in step.
 
 ## Easter eggs
 

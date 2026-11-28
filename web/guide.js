@@ -337,7 +337,8 @@ export function createGuide(api) {
 
   // ---------------------------------------------------------------- first visit
 
-  async function init() {
+  /** `welcome: false` (a show's own address) skips opening the guide on a first visit. */
+  async function init({ welcome = true } = {}) {
     showStatus();
     if (LS.get('guide.resume')) {
       // back from the Spotify login: ufo.js has finished it by now; show the last step
@@ -346,7 +347,7 @@ export function createGuide(api) {
       api.songsChanged();
       showStatus();
       open(spotify.connected() ? 3 : 2);
-    } else if (!LS.get('guided')) {
+    } else if (!LS.get('guided') && welcome) {
       open(0);
     }
   }

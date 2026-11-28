@@ -77,7 +77,8 @@ pub extern "C" fn ufo_christmas(d: *mut Demo) {
 }
 
 /// Start a concert (0: the half-hour rock concert, 1: the ten-minute Ukraine show, 2: the
-/// eight-minute secret show); the demos carry on when it is over.
+/// eight-minute secret show, 3: Kite at Dalhalla, 87 minutes); the demos carry on when it is
+/// over.
 #[unsafe(no_mangle)]
 pub extern "C" fn ufo_concert(d: *mut Demo, show: u32) {
     unsafe { (*d).concert(show as usize) }

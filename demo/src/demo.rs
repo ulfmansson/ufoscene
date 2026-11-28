@@ -236,8 +236,9 @@ impl Demo {
     }
 
     /// Start a concert now: show 0 is the half-hour rock concert (C on the page), show 1 the
-    /// ten-minute Ukraine show (E). When it is over, the current demo starts again from its
-    /// title card. Any other demo or part change ends it early.
+    /// ten-minute Ukraine show (U), show 2 the secret show, show 3 Kite at Dalhalla (K). When it
+    /// is over, the current demo starts again from its title card. Any other demo or part
+    /// change ends it early.
     pub fn concert(&mut self, show: usize) {
         let (name, len) = fx::concert::SHOWS[show % fx::concert::SHOWS.len()];
         let Some(idx) = self.defs.iter().position(|d| d.name == name) else { return };
@@ -778,6 +779,23 @@ mod tests {
         assert_eq!(d.concert_left(), 0.0);
         assert_eq!(d.state().0, 3);
         assert!(d.recipes.iter().all(|r| r.parts.iter().all(|p| d.defs[p.0].name != "UKRAINE LIVE")), "never inside a demo");
+    }
+
+    #[test]
+    fn the_kite_show_plays_as_long_as_the_record() {
+        let mut d = Demo::new();
+        let mut t = 10.0;
+        d.set_demo(5);
+        d.concert(3);
+        run(&mut d, &mut t, 1.0);
+        assert_eq!(d.state().2, "KITE LIVE");
+        t += 87.0 * 60.0;
+        run(&mut d, &mut t, 1.0);
+        assert!(d.concert_left() > 0.0 && d.concert_left() < 15.0, "{} s left", d.concert_left());
+        run(&mut d, &mut t, 15.0);
+        assert_eq!(d.concert_left(), 0.0);
+        assert_eq!(d.state().0, 5);
+        assert!(d.recipes.iter().all(|r| r.parts.iter().all(|p| d.defs[p.0].name != "KITE LIVE")), "never inside a demo");
     }
 
     #[test]
