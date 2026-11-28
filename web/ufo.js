@@ -72,8 +72,12 @@ const eggHash = location.hash.startsWith('#egg-') ? location.hash : '';
 if (eggHash) history.replaceState(null, '', location.pathname + location.search);
 const fromHash = parseInt(location.hash.slice(1), 10);
 if (fromHash >= 1 && fromHash <= demos.length) ex.ufo_set_demo(demo, fromHash - 1);
-// #concert or #ukraine in the address: the first Start opens with that show (see concert() below)
-let showOnStart = { '#concert': 'rock', '#ukraine': 'ukraine' }[location.hash] || null;
+// A show's own address starts it as soon as the page is ready (see the end of this file):
+// ufoscene.net/kite, /queen (or /concert) and /ukraine, or #kite, #queen, #concert, #ukraine.
+const SHOW_LINKS = { kite: 'kite', queen: 'rock', concert: 'rock', ukraine: 'ukraine' };
+const linkWord = (location.pathname.match(/\/(kite|queen|concert|ukraine)\/?$/i)?.[1] || location.hash.slice(1)).toLowerCase();
+let showOnStart = Object.hasOwn(SHOW_LINKS, linkWord) ? SHOW_LINKS[linkWord] : null;
+const showFromLink = showOnStart;
 
 const juke = $('juke');
 juke.value = localStorage.getItem('ufo.juke') || '2'; // shuffle unless the visitor chose otherwise
@@ -292,9 +296,14 @@ function start() {
   document.body.classList.add('running');
   setPaused(false);
   scheduleHint(12000);
-  // a show brings its own music (its setlist on Spotify, or what the visitor puts on): the
-  // tab's radio would play over it and its station messages would hide the show's
-  if (!(show && (audioKind() || 'radio') === 'radio')) startAudio();
+  // a show with a setlist brings its own music (on Spotify, or what the visitor puts on): the
+  // tab's radio would play over it and its station messages would hide the show's. A shared
+  // tab or screen can only be asked for in a click, so a show opened by its link leaves that
+  // to the next Start. The secret show has no setlist: whatever plays carries on.
+  const kind = audioKind() || 'radio';
+  const needsClick = (kind === 'tab' || kind === 'screen') && !(navigator.userActivation?.isActive ?? true);
+  const ownMusic = show && SHOWS[show].setlist;
+  if (!(ownMusic && kind === 'radio') && !(show && needsClick)) startAudio();
 }
 function togglePanel() {
   const show = panel.style.display === 'none';
@@ -309,17 +318,19 @@ $('go').addEventListener('click', start);
 // ------------------------------------------------------------------ the concert
 
 // Shows on a pixel stage (demo/src/fx/concert.rs), then the demos carry on:
-// C: half an hour of rock concert (the setlist in playlists/concert.txt).
+// C: half an hour of rock concert, Queen's songs (the setlist in playlists/concert.txt).
 // U: ten minutes of Ukraine's three Eurovision winners (playlists/ukraine.txt).
-// Also the panel's buttons, #concert / #ukraine in the address, or ufo.concert('ukraine').
-// The third, the secret show, has no key: a donor's secret link or a booked public concert
-// opens it (concerts.js), with a dedication on the LED wall.
-// With Spotify connected (Premium) the show's setlist starts in order on the Spotify app,
-// and every new song brings the next act. The same key again ends the show.
+// K: Kite at Dalhalla, as long as the record Live At Dalhalla (playlists/kite-dalhalla.txt).
+// Also the panel's buttons, the shows' addresses (ufoscene.net/kite, /queen, /ukraine, or
+// #kite …), or ufo.concert('kite'). The secret show has no key: a donor's secret link or a
+// booked public concert opens it (concerts.js), with a dedication on the LED wall.
+// With Spotify connected (Premium) the show's music starts in order on the Spotify app, and
+// every new song brings the next act. The same key again ends the show.
 const SHOWS = {
   rock: { id: 0, setlist: 'playlists/concert.txt', key: 'C', name: 'Concert' },
   ukraine: { id: 1, setlist: 'playlists/ukraine.txt', key: 'U', name: 'Ukraine at Eurovision' },
   secret: { id: 2, setlist: null, key: '', name: 'Secret show' },
+  kite: { id: 3, setlist: 'playlists/kite-dalhalla.txt', key: 'K', name: 'Kite at Dalhalla' },
 };
 let secretOpen = false; // a right secret link, or a public concert, opened it on this page
 let showNote = ''; // the dedication for the next show's LED wall
@@ -339,7 +350,15 @@ async function playSetlist(show) {
   say(`${name} on! Finding the setlist in Spotify…`, 5000);
   try {
     const text = await (await fetch(setlist)).text();
-    const { name: title, songs } = spotify.parsePlaylist(text, name);
+    const { name: title, songs, album } = spotify.parsePlaylist(text, name);
+    // a setlist that is a whole record (a live album): play the record itself, in order
+    const artist = album && songs[0]?.split(/\s+[-–—]\s+/)[0];
+    const record = artist && (await spotify.findAlbum(artist, album).catch(() => null));
+    if (record) {
+      await spotify.play(record.uri, { shuffle: false });
+      say(`${record.label}: the whole record, in order. Enjoy the show!`, 6000);
+      return;
+    }
     const hits = (await Promise.all(songs.map((s) => spotify.findTrack(s).catch(() => null)))).filter(Boolean);
     if (!hits.length) throw new Error('none of its songs were found');
     await spotify.play(hits.map((h) => h.uri), { shuffle: false });
@@ -370,7 +389,7 @@ function beginShow(show) {
   playSetlist(show);
 }
 
-/** Start `show` ('rock' or 'ukraine'); the same show again ends it, the other one takes over. */
+/** Start `show` ('rock', 'ukraine', 'kite', or 'secret' once unlocked); the same show again ends it. */
 function concert(show = 'rock') {
   if (!SHOWS[show] || (show === 'secret' && !secretOpen)) return;
   if (inConcert() && currentShow === show) {
@@ -405,6 +424,7 @@ if (eggHash) {
 }
 $('concert-go').addEventListener('click', () => concert('rock'));
 $('ukraine-go').addEventListener('click', () => concert('ukraine'));
+$('kite-go').addEventListener('click', () => concert('kite'));
 
 // Share: the system share sheet where there is one, otherwise copy the link. A page on this
 // computer (127.0.0.1) shares https://ufoscene.net instead, since nobody else can open it.
@@ -415,7 +435,7 @@ $('show-qr').addEventListener('click', () => {
 });
 $('share-ufo').addEventListener('click', async () => {
   const local = /^(127\.0\.0\.1|localhost|\[::1\])$/.test(location.hostname);
-  const url = local ? SITE : `${location.origin}${location.pathname.replace(/callback$/, '')}`;
+  const url = local ? SITE : `${location.origin}${location.pathname.replace(/(callback|kite|queen|concert|ukraine)\/?$/i, '')}`;
   const data = { title: 'ufoscene.net — a hymn to the Swedish demo scene', text: '100 Amiga-style demos that dance to your music #ufoscene', url };
   try {
     if (navigator.share) await navigator.share(data);
@@ -592,6 +612,7 @@ window.addEventListener('keydown', (e) => {
   else if (k === 'q') ex.ufo_show_qr(demo);
   else if (k === 'c') concert('rock');
   else if (k === 'u') concert('ukraine'); // U-F-O also starts the flyby egg
+  else if (k === 'k') concert('kite');
   else if (k === 't') {
     setTv(!tvmode.checked);
     say(tvmode.checked ? 'TV mode on: steady 30 fps, no scanlines' : 'TV mode off: 60 fps with scanlines', 2500);
@@ -785,8 +806,10 @@ guide = createGuide({
   },
 });
 startLastfm();
-guide.init();
+// a show's own address goes straight into the show, without the welcome
+guide.init({ welcome: !showFromLink });
 refreshPlaylists = initPlaylists({ spotify, say, container: $('playlists'), onStart: () => start() });
+if (showOnStart && !guide.isOpen()) start();
 
 async function playlistFrom(text, fallbackName) {
   if (!spotify.connected()) {

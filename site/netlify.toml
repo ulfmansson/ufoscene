@@ -8,3 +8,24 @@
   from = "/callback"
   to = "/index.html"
   status = 200
+
+# A show's own address (ufoscene.net/kite, /queen, /concert, /ukraine) is the page too.
+[[redirects]]
+  from = "/kite"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/queen"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/concert"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/ukraine"
+  to = "/index.html"
+  status = 200
