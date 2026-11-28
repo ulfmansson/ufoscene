@@ -195,8 +195,9 @@ impl Eggs {
     }
 }
 
-/// The saucer: a grey disc with a glass dome and lights that run round on the beat.
-fn saucer(fb: &mut Fb, cx: i32, cy: i32, t: f32, a: &Audio, pal: &Palette) {
+/// The saucer: a grey disc with a glass dome and lights that run round on the beat. The
+/// secret show (fx/concert.rs) has it hover over the stage.
+pub(crate) fn saucer(fb: &mut Fb, cx: i32, cy: i32, t: f32, a: &Audio, pal: &Palette) {
     // dome
     for dy in -7..0 {
         let half = ((49 - dy * dy) as f32).sqrt() as i32;

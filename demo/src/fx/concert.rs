@@ -16,7 +16,12 @@
 //! for 1944 (2016), embroidery, a flute, a breakdancer and a pink bucket hat for Stefania
 //! (2022), and a blue and yellow finale. The performers stay the same made-up pixel band.
 //!
-//! Like the Christmas scene neither is in `all()`, so the 100 demos stay as they are.
+//! A third, SECRET SHOW, is the easter egg that donors to Ukraine's defence get on
+//! pi.ufoscene.net: eight minutes of the rock stage with a UFO hovering over the band and the
+//! page's dedication (`Ctx::text`, see `Demo::set_concert_note`) on the LED wall now and then.
+//! The page opens it with a secret code, or for everyone at a booked public concert.
+//!
+//! Like the Christmas scene none of them is in `all()`, so the 100 demos stay as they are.
 
 use std::f32::consts::TAU;
 
@@ -27,8 +32,14 @@ use crate::font;
 pub const SECONDS: f32 = 30.0 * 60.0;
 /// How long the Ukraine show lasts: three songs, about three minutes each.
 pub const UKRAINE_SECONDS: f32 = 10.0 * 60.0;
+/// How long the secret show lasts.
+pub const SECRET_SECONDS: f32 = 8.0 * 60.0;
 /// The shows the page can start (`Demo::concert`): the scene's name and its length.
-pub const SHOWS: [(&str, f32); 2] = [("LIVE CONCERT", SECONDS), ("UKRAINE LIVE", UKRAINE_SECONDS)];
+pub const SHOWS: [(&str, f32); 3] =
+    [("LIVE CONCERT", SECONDS), ("UKRAINE LIVE", UKRAINE_SECONDS), ("SECRET SHOW", SECRET_SECONDS)];
+/// The dedication shows on the LED wall this long, every `NOTE_EVERY` seconds.
+const NOTE_FOR: f32 = 8.0;
+const NOTE_EVERY: f32 = 30.0;
 /// The dark minute before the lights go up (here: seconds).
 const DOORS: f32 = 8.0;
 /// The band takes its bow in the last seconds.
@@ -44,10 +55,16 @@ pub fn ukraine_def() -> Def {
     Def { name: SHOWS[1].0, flags: VECTOR | OWN_TEXT, make: |s| Box::new(Concert::new(s, Show::Ukraine)) }
 }
 
+pub fn secret_def() -> Def {
+    Def { name: SHOWS[2].0, flags: VECTOR | OWN_TEXT, make: |s| Box::new(Concert::new(s, Show::Secret)) }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum Show {
     Rock,
     Ukraine,
+    /// The donors' easter egg: the rock stage, shorter, with a UFO and a dedication.
+    Secret,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -91,13 +108,44 @@ const UKRAINE: Plan = Plan {
     finale_from: UKRAINE_SECONDS - 40.0,
 };
 
+const SECRET: Plan = Plan {
+    acts: &[Act::Lights, Act::Disco, Act::Pyro, Act::Stadium, Act::Solo, Act::Finale],
+    length: SECRET_SECONDS,
+    slot: 80.0,
+    finale_from: SECRET_SECONDS - 60.0,
+};
+
 impl Show {
     fn plan(self) -> &'static Plan {
         match self {
             Show::Rock => &ROCK,
             Show::Ukraine => &UKRAINE,
+            Show::Secret => &SECRET,
         }
     }
+}
+
+/// The dedication in lines that fit the LED wall at scale 1 (20 bold letters), broken at
+/// spaces where it can be, at most three lines.
+fn wall_lines(note: &str) -> Vec<String> {
+    const MAX: usize = 20;
+    let mut lines: Vec<String> = Vec::new();
+    for word in note.split_whitespace() {
+        let mut word: Vec<char> = word.chars().collect();
+        while word.len() > MAX {
+            lines.push(word.drain(..MAX).collect());
+        }
+        let word: String = word.into_iter().collect();
+        match lines.last_mut() {
+            Some(l) if l.chars().count() + 1 + word.chars().count() <= MAX => {
+                l.push(' ');
+                l.push_str(&word);
+            }
+            _ => lines.push(word),
+        }
+    }
+    lines.truncate(3);
+    lines
 }
 
 /// The colours of Ukraine's flag.
@@ -701,6 +749,26 @@ impl Concert {
         }
     }
 
+    /// The page's dedication (`c.text`) over the LED wall, if there is one.
+    fn note(&self, fb: &mut Fb, c: &Ctx) {
+        let lines = wall_lines(c.text);
+        if lines.is_empty() {
+            return;
+        }
+        let (sx, sy, sw, sh) = SCREEN;
+        fb.fill_rect(sx, sy, sw, sh, rgb(6, 6, 14));
+        let n = lines.len() as i32;
+        let top = sy + (sh - n * 12 + 4) / 2;
+        for (i, l) in lines.iter().enumerate() {
+            let w = font::text_width(l, 1, true);
+            let col = if i == 0 { self.gold.hi } else { rgb(255, 255, 255) };
+            font::text(fb, l, sx + (sw - w) / 2, top + i as i32 * 12, 1, true, col);
+        }
+        for y in (sy..sy + sh).step_by(2) {
+            fb.hspan_blend(sx, sx + sw, y, rgb(0, 0, 0), 0.25);
+        }
+    }
+
     fn led_wall(&self, fb: &mut Fb, c: &Ctx, act: Option<Act>, wash: u32, goodbye: bool) {
         let (sx, sy, sw, sh) = SCREEN;
         fb.fill_rect(sx - 2, sy - 2, sw + 4, sh + 4, rgb(28, 28, 34));
@@ -737,7 +805,11 @@ impl Concert {
         }
         if act.is_none() && !goodbye {
             dancing_text(fb, "LIVE", (sx + (sw - 82) / 2) as f32, sy as f32 + 6.0, 3.0, c.t, c.a, c.beats, c.pal);
-            let line = if self.show == Show::Ukraine { "UKRAINE" } else { "TONIGHT" };
+            let line = match self.show {
+                Show::Ukraine => "UKRAINE",
+                Show::Secret => "SECRET",
+                Show::Rock => "TONIGHT",
+            };
             let w = font::text_width(line, 2, true);
             font::text(fb, line, sx + (sw - w) / 2, sy + 38, 2, true, rgb(255, 255, 255));
         }
@@ -788,6 +860,15 @@ impl Effect for Concert {
             }
         }
         self.led_wall(fb, c, act, wash, goodbye);
+        if act.is_some() && (goodbye || (t - DOORS).rem_euclid(NOTE_EVERY) < NOTE_FOR) {
+            self.note(fb, c);
+        }
+        if self.show == Show::Secret && act.is_some() {
+            // the UFO came to see the show: it drifts over the stage, lights on the beat
+            let cx = 192.0 + 150.0 * (t * 0.21).sin();
+            let cy = 26.0 + 4.0 * (t * 1.3).sin() - 8.0 * a.pulse;
+            crate::eggs::saucer(fb, cx as i32, cy as i32, t, a, c.pal);
+        }
         let tree = act == Some(Act::Tree) && !goodbye;
         if tree {
             // grows out of the stage behind the singer and spreads over the whole back wall
@@ -1185,6 +1266,43 @@ mod tests {
         assert_eq!(fx.act, 1);
         frame(&mut fx, &mut fb, &mut a, ROCK.finale_from + 1.0, 2);
         assert_eq!(fx.act, 7, "the finale closes the show whatever plays");
+    }
+
+    #[test]
+    fn the_secret_show_plays_every_act_once_in_eight_minutes() {
+        let (mut fx, mut fb, mut a) = (Concert::new(5, Show::Secret), Fb::new(), Audio::new());
+        let mut seen = Vec::new();
+        let mut t = 0.0;
+        while t < SECRET_SECONDS {
+            frame(&mut fx, &mut fb, &mut a, t, 0);
+            let act = SECRET.acts[fx.act];
+            if seen.last() != Some(&act) {
+                seen.push(act);
+            }
+            t += 1.0;
+        }
+        assert_eq!(seen, SECRET.acts.to_vec(), "every act once, the finale last");
+        assert_eq!(SHOWS[2], ("SECRET SHOW", SECRET_SECONDS));
+    }
+
+    #[test]
+    fn the_dedication_fits_the_wall() {
+        assert_eq!(wall_lines(""), Vec::<String>::new());
+        assert_eq!(wall_lines("FOR ABC"), vec!["FOR ABC"]);
+        assert_eq!(wall_lines("ABC: SLAVA UKRAINI! HEROIAM SLAVA!"), vec!["ABC: SLAVA UKRAINI!", "HEROIAM SLAVA!"]);
+        assert_eq!(wall_lines(&"X".repeat(45)), vec!["X".repeat(20), "X".repeat(20), "X".repeat(5)]);
+        assert_eq!(wall_lines(&"AB ".repeat(40)).len(), 3, "at most three lines");
+        for l in wall_lines("A DEDICATION OF FORTY LETTERS OR SO, WITH WORDS") {
+            assert!(font::text_width(&l, 1, true) <= SCREEN.2, "{l}");
+        }
+        // drawn on the wall in the show, and nothing breaks without one
+        let (mut fx, mut fb, mut a) = (Concert::new(6, Show::Secret), Fb::new(), Audio::new());
+        let pal = palette(3);
+        a.update(20.0, 1.0 / 30.0, false);
+        for text in ["", "ABC: SLAVA UKRAINI!"] {
+            let c = Ctx { t: 20.0, time: 20.0, dt: 1.0 / 30.0, a: &a, pal: &pal, beats: 0, phase: 0.0, name: "", text, image: None, song: 0, skips: 0 };
+            fx.draw(&mut fb, &c);
+        }
     }
 
     #[test]

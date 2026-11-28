@@ -9,6 +9,7 @@ import * as lastfm from './lastfm.js';
 import { createGuide, audioKind, setAudioKind, canShare, songs } from './guide.js';
 import { initPlaylists } from './playlists.js';
 import { initEggs, christmasWeek } from './eggs.js';
+import { initConcerts, secretFromHash, SCHEDULE_URL } from './concerts.js';
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('c');
@@ -65,6 +66,10 @@ function markCurrent() {
   const n = cur + 1;
   if (location.hash !== `#${n}`) history.replaceState(null, '', `#${n}`);
 }
+// #egg-<code>-<letters>: the secret show for a donor (concerts.js). The code leaves the address
+// bar at once, so a screenshot or a shared link does not give it away.
+const eggHash = location.hash.startsWith('#egg-') ? location.hash : '';
+if (eggHash) history.replaceState(null, '', location.pathname + location.search);
 const fromHash = parseInt(location.hash.slice(1), 10);
 if (fromHash >= 1 && fromHash <= demos.length) ex.ufo_set_demo(demo, fromHash - 1);
 // #concert or #ukraine in the address: the first Start opens with that show (see concert() below)
@@ -301,21 +306,30 @@ $('go').addEventListener('click', start);
 
 // ------------------------------------------------------------------ the concert
 
-// Two shows on a pixel stage (demo/src/fx/concert.rs), then the demos carry on:
+// Shows on a pixel stage (demo/src/fx/concert.rs), then the demos carry on:
 // C: half an hour of rock concert (the setlist in playlists/concert.txt).
 // E: ten minutes of Ukraine's three Eurovision winners (playlists/ukraine.txt).
 // Also the panel's buttons, #concert / #ukraine in the address, or ufo.concert('ukraine').
+// The third, the secret show, has no key: a donor's secret link or a booked public concert
+// opens it (concerts.js), with a dedication on the LED wall.
 // With Spotify connected (Premium) the show's setlist starts in order on the Spotify app,
 // and every new song brings the next act. The same key again ends the show.
 const SHOWS = {
   rock: { id: 0, setlist: 'playlists/concert.txt', key: 'C', name: 'Concert' },
   ukraine: { id: 1, setlist: 'playlists/ukraine.txt', key: 'E', name: 'Ukraine at Eurovision' },
+  secret: { id: 2, setlist: null, key: '', name: 'Secret show' },
 };
+let secretOpen = false; // a right secret link, or a public concert, opened it on this page
+let showNote = ''; // the dedication for the next show's LED wall
 let currentShow = null;
 const inConcert = () => ex.ufo_concert_left(demo) > 0;
 
 async function playSetlist(show) {
   const { setlist, key, name } = SHOWS[show];
+  if (!setlist) {
+    say(`${name}! Put some music on. Thank you for supporting Ukraine's defence 💙💛`, 9000);
+    return;
+  }
   if (!spotify.connected()) {
     say(`${name} on! Put the music on, or connect Spotify (G) to start the setlist from here.`, 9000);
     return;
@@ -337,13 +351,18 @@ async function playSetlist(show) {
 
 function beginShow(show) {
   currentShow = show;
+  if (ex.ufo_set_concert_note) {
+    const bytes = new TextEncoder().encode(show === 'secret' ? showNote : '').slice(0, 1024);
+    new Uint8Array(mem(), ex.ufo_text_buf(demo), 1024).set(bytes);
+    ex.ufo_set_concert_note(demo, bytes.length);
+  }
   ex.ufo_concert(demo, SHOWS[show].id);
   playSetlist(show);
 }
 
 /** Start `show` ('rock' or 'ukraine'); the same show again ends it, the other one takes over. */
 function concert(show = 'rock') {
-  if (!SHOWS[show]) return;
+  if (!SHOWS[show] || (show === 'secret' && !secretOpen)) return;
   if (inConcert() && currentShow === show) {
     ex.ufo_set_demo(demo, ex.ufo_current_demo(demo));
     say(`${SHOWS[show].name} over: back to the demos`, 3000);
@@ -354,6 +373,21 @@ function concert(show = 'rock') {
   beginShow(show);
 }
 window.ufo.concert = concert;
+
+// The secret link: Start opens the secret show, with the donor's letters on the stage.
+if (eggHash) {
+  secretFromHash(eggHash).then((letters) => {
+    if (letters === null) {
+      say('That secret link did not work. Copy the whole link from pi.ufoscene.net.', 9000);
+      return;
+    }
+    secretOpen = true;
+    showNote = letters ? `THANK YOU ${letters}` : 'THANK YOU';
+    if (panel.style.display === 'none') beginShow('secret'); // already started
+    else showOnStart = 'secret';
+    say('🛸 The secret show is unlocked. Press Start!', 9000);
+  });
+}
 $('concert-go').addEventListener('click', () => concert('rock'));
 $('ukraine-go').addEventListener('click', () => concert('ukraine'));
 
@@ -491,6 +525,17 @@ window.ufo.egg = initEggs({
   isRunning: () => panel.style.display === 'none' && !guide?.isOpen(),
 });
 window.ufo.christmas = () => ex.ufo_christmas(demo); // to see the Christmas scene any day
+// Public concerts booked on pi.ufoscene.net play here at their time (concerts.js).
+initConcerts({
+  url: siteConfig.concertsUrl ?? SCHEDULE_URL,
+  play: (note) => {
+    secretOpen = true;
+    showNote = note;
+    if (!(inConcert() && currentShow === 'secret')) beginShow('secret');
+  },
+  isRunning: () => panel.style.display === 'none' && !guide?.isOpen(),
+  say,
+});
 // A phone has no P key: on a touch screen a tap on the running demo opens the settings and a
 // double tap goes fullscreen. The tap waits a moment, so a double tap doesn't open them as well.
 let touchTap = false;

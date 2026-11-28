@@ -214,6 +214,10 @@ There are a few. No spoilers, only hints:
 - The calendar and the clock: some days and some nights are special, in a Swedish way.
 - The browser console has something to say to sceners.
 - And sometimes something just flies by on its own.
+- A secret show that no key opens. Donate at least 500 kr to the defence of Ukraine on
+  [pi.ufoscene.net/concert](https://pi.ufoscene.net/concert) and you get the link. With 5000 kr
+  it plays for everyone on ufoscene.net at a time you pick, with your dedication on the stage
+  (`web/concerts.js`).
 
 Not a secret: from 23 to 28 December the show opens with a Swedish Christmas night, a red
 cottage with candles in the windows, a straw goat and a tree that blinks to the music, before
@@ -334,7 +338,7 @@ the effect looks different in different demos. See the top of `demo/src/fx/mod.r
 | `demo/src/gfx.rs`, `font.rs`, `zx.rs` | framebuffer and primitives, the 5×7 font with ÅÄÖ, the Spectrum room |
 | `demo/src/lib.rs` | the C ABI that `ufo.wasm` exports to the page |
 | `serve/` | std-only static file server on 127.0.0.1 and ::1 |
-| `web/` | `index.html`, `ufo.js` (glue, audio, keys), `guide.js` (setup guide), `guides.html` (step-by-step guides per environment), `radio.js` (internet radio), `eggs.js` (when the easter eggs come; they are drawn in `demo/src/eggs.rs`), `spotify.js`, `lastfm.js`, `pictures.js` (Wikidata/Commons photos), `playlist.txt` |
+| `web/` | `index.html`, `ufo.js` (glue, audio, keys), `guide.js` (setup guide), `guides.html` (step-by-step guides per environment), `radio.js` (internet radio), `eggs.js` (when the easter eggs come; they are drawn in `demo/src/eggs.rs`), `concerts.js` (the secret show's link and the public concerts booked on pi.ufoscene.net), `spotify.js`, `lastfm.js`, `pictures.js` (Wikidata/Commons photos), `playlist.txt` |
 | `site/` | building and hosting it as a public website (AWS S3 + CloudFront with Pulumi, or Cloudflare): see [`site/README.md`](site/README.md) |
 
 ## Contributing
