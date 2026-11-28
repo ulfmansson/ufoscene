@@ -21,6 +21,13 @@
 //! page's dedication (`Ctx::text`, see `Demo::set_concert_note`) on the LED wall now and then.
 //! The page opens it with a secret code, or for everyone at a booked public concert.
 //!
+//! A fourth, KITE LIVE (K on the page, `ufoscene.net/kite`), is inspired by the Swedish
+//! synth duo Kite's homecoming concert in the Dalhalla quarry near Rättvik on 2 September
+//! 2023, and lasts as long as the record of it, *Live At Dalhalla* (1:27:10, 17 songs). It
+//! has a stage of its own (`dalhalla`): limestone walls and pines around a lake, the sky going
+//! from dusk to night, and one act per song, among them the eight red signal flares lit on
+//! the rock face before Glassy Eyes.
+//!
 //! Like the Christmas scene none of them is in `all()`, so the 100 demos stay as they are.
 
 use std::f32::consts::TAU;
@@ -28,15 +35,44 @@ use std::f32::consts::TAU;
 use super::*;
 use crate::font;
 
+mod dalhalla;
+
 /// How long the rock concert lasts, in seconds.
 pub const SECONDS: f32 = 30.0 * 60.0;
 /// How long the Ukraine show lasts: three songs, about three minutes each.
 pub const UKRAINE_SECONDS: f32 = 10.0 * 60.0;
 /// How long the secret show lasts.
 pub const SECRET_SECONDS: f32 = 8.0 * 60.0;
+/// Kite at Dalhalla: the songs of the record *Live At Dalhalla* (2026), in order, with their
+/// lengths in seconds (from the record's track list). Songs 8 and 17 were played from tape.
+pub const KITE_SONGS: [(&str, f32); 17] = [
+    ("REMEMBER ME", 510.4),
+    ("CHANGING", 205.1),
+    ("TRUE COLOURS", 357.1),
+    ("BOCELLI", 308.3),
+    ("HAND OUT THE DRUGS", 385.9),
+    ("HILLS", 383.4),
+    ("DON'T TAKE THE LIGHT AWAY", 348.7),
+    ("DON'T DANCE", 240.0),
+    ("DANCE AGAIN", 355.3),
+    ("TEENAGE BLISS", 212.8),
+    ("GLASSY EYES", 184.6),
+    ("I CAN'T STAND", 260.8),
+    ("IF YOU WANT ME", 335.3),
+    ("PANIC MUSIC", 285.8),
+    ("JONNY BOY", 235.7),
+    ("NOCTURNE", 373.5),
+    ("CANNIBAL HOLOCAUST", 247.4),
+];
+/// How long the Kite show lasts: the whole record, 1:27:10.
+pub const KITE_SECONDS: f32 = 5230.0;
 /// The shows the page can start (`Demo::concert`): the scene's name and its length.
-pub const SHOWS: [(&str, f32); 3] =
-    [("LIVE CONCERT", SECONDS), ("UKRAINE LIVE", UKRAINE_SECONDS), ("SECRET SHOW", SECRET_SECONDS)];
+pub const SHOWS: [(&str, f32); 4] = [
+    ("LIVE CONCERT", SECONDS),
+    ("UKRAINE LIVE", UKRAINE_SECONDS),
+    ("SECRET SHOW", SECRET_SECONDS),
+    ("KITE LIVE", KITE_SECONDS),
+];
 /// The dedication shows on the LED wall this long, every `NOTE_EVERY` seconds.
 const NOTE_FOR: f32 = 8.0;
 const NOTE_EVERY: f32 = 30.0;
@@ -59,12 +95,17 @@ pub fn secret_def() -> Def {
     Def { name: SHOWS[2].0, flags: VECTOR | OWN_TEXT, make: |s| Box::new(Concert::new(s, Show::Secret)) }
 }
 
+pub fn kite_def() -> Def {
+    Def { name: SHOWS[3].0, flags: VECTOR | OWN_TEXT, make: |s| Box::new(Concert::new(s, Show::Kite)) }
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 enum Show {
     Rock,
     Ukraine,
     /// The donors' easter egg: the rock stage, shorter, with a UFO and a dedication.
     Secret,
+    Kite,
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -83,15 +124,42 @@ enum Act {
     /// Ukraine 2022: embroidery, a flute, a breakdancer, a pink bucket hat.
     Stefania,
     Finale,
+    /// Kite: the opener at dusk, white beams fanning slowly up into the evening sky.
+    Dusk,
+    /// Kite: laser fans over the lake and the crowd, onto the quarry walls.
+    Lasers,
+    /// Kite: the quarry walls flooded in slowly turning colours.
+    Walls,
+    /// Kite: searchlights from the stage straight up into the night, sweeping.
+    Sky,
+    /// Kite: white strobes on the beat.
+    Strobe,
+    /// Kite: one spot on the singer, phone lights all over the crowd.
+    Spot,
+    /// Kite: a song from tape. The band is off and the lights play on their own.
+    Tape,
+    /// Kite, Glassy Eyes: eight red signal flares burning on the quarry wall.
+    Flares,
+    /// Kite, Nocturne: fireworks over the quarry rim, mirrored in the lake.
+    Fireworks,
 }
 
 /// How a show runs: its acts (the finale last), how long it lasts, how long an act lasts
-/// without song names, and when the finale starts whatever plays.
+/// without song names, and when the finale starts whatever plays. A show with `songs` has
+/// one act per song, played once and in order, each as long as its song.
 struct Plan {
     acts: &'static [Act],
     length: f32,
     slot: f32,
     finale_from: f32,
+    songs: &'static [(&'static str, f32)],
+}
+
+impl Plan {
+    /// How long act `i` lasts when no song names come in.
+    fn slot(&self, i: usize) -> f32 {
+        self.songs.get(i).map_or(self.slot, |s| s.1)
+    }
 }
 
 const ROCK: Plan = Plan {
@@ -99,6 +167,7 @@ const ROCK: Plan = Plan {
     length: SECONDS,
     slot: 224.0,
     finale_from: SECONDS - 150.0,
+    songs: &[],
 };
 
 const UKRAINE: Plan = Plan {
@@ -106,6 +175,34 @@ const UKRAINE: Plan = Plan {
     length: UKRAINE_SECONDS,
     slot: 184.0,
     finale_from: UKRAINE_SECONDS - 40.0,
+    songs: &[],
+};
+
+/// Kite at Dalhalla: one act per song of `KITE_SONGS`; the last (from tape) is the goodbye.
+const KITE: Plan = Plan {
+    acts: &[
+        Act::Dusk,
+        Act::Lasers,
+        Act::Walls,
+        Act::Sky,
+        Act::Strobe,
+        Act::Walls,
+        Act::Spot,
+        Act::Tape,
+        Act::Lasers,
+        Act::Sky,
+        Act::Flares,
+        Act::Strobe,
+        Act::Walls,
+        Act::Lasers,
+        Act::Sky,
+        Act::Fireworks,
+        Act::Tape,
+    ],
+    length: KITE_SECONDS,
+    slot: 300.0,
+    finale_from: KITE_SECONDS - 247.4,
+    songs: &KITE_SONGS,
 };
 
 const SECRET: Plan = Plan {
@@ -113,6 +210,7 @@ const SECRET: Plan = Plan {
     length: SECRET_SECONDS,
     slot: 80.0,
     finale_from: SECRET_SECONDS - 60.0,
+    songs: &[],
 };
 
 impl Show {
@@ -121,6 +219,7 @@ impl Show {
             Show::Rock => &ROCK,
             Show::Ukraine => &UKRAINE,
             Show::Secret => &SECRET,
+            Show::Kite => &KITE,
         }
     }
 }
@@ -268,10 +367,12 @@ impl Concert {
     }
 
     fn next_act(&mut self, t: f32) {
-        // the finale waits for the end of the show; in a long show the acts go round again
+        // the finale waits for the end of the show; in a long show the acts go round again,
+        // but a show with an act per song plays them once
         let p = self.show.plan();
         let finale = p.acts.len() - 1;
-        self.act = if self.act + 1 >= finale && t < p.length - 600.0 { 1 } else { (self.act + 1).min(finale) };
+        let again = p.songs.is_empty() && self.act + 1 >= finale && t < p.length - 600.0;
+        self.act = if again { 1 } else { (self.act + 1).min(finale) };
         self.act_t0 = t;
     }
 
@@ -281,22 +382,35 @@ impl Concert {
             self.next_act(t);
         }
         self.skips = Some(skips);
+        let p = self.show.plan();
         match self.song {
             None => self.song = Some(song),
             Some(s) if s != song => {
                 self.song = Some(song);
+                // With an act per song the clock keeps each act exactly as long as its song,
+                // so it is often a little ahead of the music (which starts some seconds after
+                // the show): a song arriving just after the clock moved on is that act's song.
+                let caught_up = !self.by_song && !p.songs.is_empty() && t - self.act_t0 < 30.0;
                 if t > FIRST_SONG {
                     self.by_song = true;
-                    self.next_act(t);
+                    if !caught_up {
+                        self.next_act(t);
+                    }
                 }
             }
             _ => {}
         }
-        let p = self.show.plan();
         let finale = p.acts.len() - 1;
         let age = t - self.act_t0;
         // songs set the pace; a song that never seems to end still gives way after 7 minutes
-        if (!self.by_song && age > p.slot) || age > 420.0 {
+        // (or a minute after its own length, when the show knows it)
+        let slot = p.slot(self.act);
+        let longest = if p.songs.is_empty() { 420.0 } else { slot + 60.0 };
+        if !self.by_song && age > slot {
+            // on the clock: the next act starts when this one's time is up, not on the frame
+            // after, so a long show with an act per song keeps time with its record
+            self.next_act(self.act_t0 + slot);
+        } else if age > longest {
             self.next_act(t);
         }
         if t > p.finale_from && self.act != finale {
@@ -564,6 +678,13 @@ impl Concert {
             Some(Act::Stefania) => [rgb(255, 90, 180), YELLOW, rgb(40, 130, 255)][i % 3],
             Some(Act::Finale) if self.show == Show::Ukraine => if i.is_multiple_of(2) { BLUE } else { YELLOW },
             Some(Act::Finale) => rainbow(i as f32 / 8.0 + t * 0.3),
+            Some(Act::Dusk | Act::Sky) => rgb(225, 235, 255),
+            Some(Act::Lasers) => [rgb(40, 255, 120), rgb(40, 220, 255)][i % 2],
+            Some(Act::Walls) => rainbow(i as f32 / 8.0 + t * 0.02),
+            Some(Act::Strobe | Act::Spot) => rgb(255, 255, 255),
+            Some(Act::Tape) => mix(pal.at(i as f32 * 0.1 + t * 0.03), rgb(80, 120, 255), 0.4),
+            Some(Act::Flares) => rgb(255, 40, 30),
+            Some(Act::Fireworks) => rainbow(i as f32 / 8.0 + t * 0.2),
         }
     }
 
@@ -581,6 +702,15 @@ impl Concert {
             Some(Act::Stefania) => rgb(200, 50, 140),
             Some(Act::Finale) if self.show == Show::Ukraine => BLUE,
             Some(Act::Finale) => rainbow(t * 0.1),
+            Some(Act::Dusk) => rgb(90, 110, 190),
+            Some(Act::Lasers) => rgb(20, 150, 110),
+            Some(Act::Walls) => rainbow(t * 0.02),
+            Some(Act::Sky) => rgb(110, 130, 210),
+            Some(Act::Strobe) => rgb(170, 170, 200),
+            Some(Act::Spot) => rgb(30, 40, 110),
+            Some(Act::Tape) => pal.at(t * 0.03),
+            Some(Act::Flares) => rgb(210, 30, 25),
+            Some(Act::Fireworks) => rainbow(t * 0.1),
         }
     }
 
@@ -609,7 +739,7 @@ impl Concert {
         for f in &self.fans {
             let r = 3.0 + f.row as f32;
             let base = 160.0 + f.row as f32 * 15.0;
-            let jumpy = !matches!(act, None | Some(Act::Ballad | Act::Tree));
+            let jumpy = !matches!(act, None | Some(Act::Ballad | Act::Tree | Act::Dusk | Act::Spot));
             let bounce = if jumpy { a.pulse * (1.5 + f.row as f32) * f.jump * 1.6 } else { (t * 1.3 + f.ph).sin() * 0.6 };
             let hy = base - bounce;
             let shade = rgb(5, 4, 9);
@@ -627,15 +757,17 @@ impl Concert {
             let (hands, light): (Option<Hands>, bool) = match act {
                 _ if goodbye => (Some(((sh.1 - 3.0 + sway * 3.0, sh.0 - reach), (sh.2 + 3.0 + sway * 3.0, sh.0 - reach))), false),
                 None => (f.light.then_some(((sh.1, sh.0 + 2.0), (sh.2 + 1.0, sh.0 - reach + 2.0))), f.light),
-                Some(Act::Ballad | Act::Tree) => {
+                Some(Act::Ballad | Act::Tree | Act::Spot) => {
                     let s = (t * 1.1 + f.ph * 0.3).sin() * 4.0;
                     (f.light.then_some(((sh.1, sh.0 + 2.0), (sh.2 + s, sh.0 - reach))), f.light)
                 }
+                // the opener: phones up, filming the lights coming up over the quarry
+                Some(Act::Dusk) => (f.light.then_some(((sh.1, sh.0 + 2.0), (sh.2 + 1.0, sh.0 - reach + 2.0))), f.light),
                 Some(Act::Clap) => {
                     let pos = if clap { ((f.x - 1.0, sh.0 - reach - 1.0), (f.x + 1.0, sh.0 - reach - 1.0)) } else { (up(-3.0), (sh.2 + 3.0, sh.0 - reach + 3.0)) };
                     (Some(pos), false)
                 }
-                Some(Act::Stadium | Act::Finale | Act::Stefania) => {
+                Some(Act::Stadium | Act::Finale | Act::Stefania | Act::Fireworks | Act::Flares) => {
                     // most wave their arms in time, the rest jump on the beat
                     let s = sway * 5.0;
                     let waving = f.jump > 0.55 || a.pulse * f.jump > 0.3;
@@ -653,7 +785,7 @@ impl Concert {
                 fb.put(l.0 as i32, l.1 as i32, rim);
                 fb.put(rr.0 as i32, rr.1 as i32, rim);
                 if light {
-                    if act.is_none() {
+                    if matches!(act, None | Some(Act::Dusk | Act::Spot)) {
                         // a phone, filming
                         fb.fill_rect(rr.0 as i32, rr.1 as i32 - 3, 2, 3, rgb(210, 225, 255));
                         glow(fb, rr.0 + 1.0, rr.1 - 2.0, 4.0, rgb(150, 170, 255), 0.5);
@@ -836,6 +968,7 @@ impl Concert {
             let line = match self.show {
                 Show::Ukraine => "UKRAINE",
                 Show::Secret => "SECRET",
+                Show::Kite => "KITE", // its own stage (`dalhalla`) draws the wall
                 Show::Rock => "TONIGHT",
             };
             let w = font::text_width(line, 2, true);
@@ -868,6 +1001,10 @@ impl Effect for Concert {
     fn draw(&mut self, fb: &mut Fb, c: &Ctx) {
         let (t, a, dt) = (c.t, c.a, c.dt);
         self.follow(t, c.song, c.skips);
+        if self.show == Show::Kite {
+            // a stage of its own: the quarry at Dalhalla
+            return self.dalhalla(fb, c);
+        }
         let plan = self.show.plan();
         let ukraine = self.show == Show::Ukraine;
         let act = (t >= DOORS).then(|| plan.acts[self.act]);
@@ -1000,6 +1137,10 @@ impl Effect for Concert {
                 }
                 Some(Act::Stefania) => (192.0 + 150.0 * (t * 0.9 + fi * 0.8).sin(), 136.0, 14.0, flash),
                 Some(Act::Finale) => (192.0 + 170.0 * (t * 1.1 + fi * 0.9).sin(), 136.0, 14.0, flash),
+                // the Kite show's acts light their own stage (`dalhalla`)
+                Some(Act::Dusk | Act::Lasers | Act::Walls | Act::Sky | Act::Strobe | Act::Spot | Act::Tape | Act::Flares | Act::Fireworks) => {
+                    (0.0, 0.0, 0.0, 0.0)
+                }
             };
             beam(fb, x, TRUSS_Y as f32 + 12.0, tx, ty, w, col, k);
         }
@@ -1257,17 +1398,21 @@ impl Effect for Concert {
             self.winner_captions(fb, act, age);
         }
 
-        // the show clock
-        let left = t.clamp(0.0, plan.length) as u32;
-        let clock = format!("LIVE {:02}:{:02} / {:02}:00", left / 60, left % 60, plan.length as u32 / 60);
-        let w = font::text_width(&clock, 1, false);
-        let (x, y) = (WI - w - 8, HI - 11);
-        fb.fill_rect(x - 10, y - 2, w + 14, 11, rgb(0, 0, 0));
-        if ((t * 2.0) as u32).is_multiple_of(2) {
-            fb.fill_rect(x - 7, y + 1, 4, 4, rgb(255, 40, 40));
-        }
-        font::text(fb, &clock, x, y, 1, false, rgb(230, 230, 230));
+        show_clock(fb, t, plan.length);
     }
+}
+
+/// "LIVE 12:34 / 30:00" in the bottom right corner, with a blinking red dot.
+fn show_clock(fb: &mut Fb, t: f32, length: f32) {
+    let mmss = |s: u32| format!("{:02}:{:02}", s / 60, s % 60);
+    let clock = format!("LIVE {} / {}", mmss(t.clamp(0.0, length) as u32), mmss(length as u32));
+    let w = font::text_width(&clock, 1, false);
+    let (x, y) = (WI - w - 8, HI - 11);
+    fb.fill_rect(x - 10, y - 2, w + 14, 11, rgb(0, 0, 0));
+    if ((t * 2.0) as u32).is_multiple_of(2) {
+        fb.fill_rect(x - 7, y + 1, 4, 4, rgb(255, 40, 40));
+    }
+    font::text(fb, &clock, x, y, 1, false, rgb(230, 230, 230));
 }
 
 #[cfg(test)]
@@ -1382,6 +1527,92 @@ mod tests {
         assert_eq!(UKRAINE.acts[fx.act], Act::Stefania, "Stefania plays to its end");
         frame(&mut fx, &mut fb, &mut a, UKRAINE.finale_from + 1.0, 3);
         assert_eq!(UKRAINE.acts[fx.act], Act::Finale);
+    }
+
+    /// When each song of *Live At Dalhalla* starts on the record.
+    fn kite_starts() -> Vec<f32> {
+        KITE_SONGS.iter().scan(0.0, |at, s| Some(std::mem::replace(at, *at + s.1))).collect()
+    }
+
+    #[test]
+    fn the_kite_show_is_as_long_as_the_record_with_an_act_per_song() {
+        assert_eq!(KITE.acts.len(), KITE_SONGS.len());
+        let record: f32 = KITE_SONGS.iter().map(|s| s.1).sum();
+        assert!((record - KITE_SECONDS).abs() < 1.0, "the record is {record} s");
+        assert_eq!(SHOWS[3], ("KITE LIVE", KITE_SECONDS));
+        // without song names the acts change when the record's songs do, once each, in order
+        let (mut fx, mut fb, mut a) = (Concert::new(5, Show::Kite), Fb::new(), Audio::new());
+        let mut changes = vec![(0.0, 0)];
+        let mut t = 0.0;
+        while t < KITE_SECONDS {
+            frame(&mut fx, &mut fb, &mut a, t, 0);
+            if changes.last().unwrap().1 != fx.act {
+                changes.push((t, fx.act));
+            }
+            t += 0.5;
+        }
+        let acts: Vec<usize> = changes.iter().map(|c| c.1).collect();
+        assert_eq!(acts, (0..17).collect::<Vec<_>>(), "every song once, in order");
+        for ((at, i), start) in changes.iter().zip(kite_starts()) {
+            assert!((at - start).abs() <= 1.0, "song {} starts at {at} s, on the record at {start} s", i + 1);
+        }
+    }
+
+    #[test]
+    fn kite_songs_arriving_a_little_behind_the_clock_keep_their_own_act() {
+        // Spotify starts the record a few seconds after the show: every song arrives just
+        // after the clock moved on to its act, and must not push the show one act ahead
+        let (mut fx, mut fb, mut a) = (Concert::new(6, Show::Kite), Fb::new(), Audio::new());
+        let starts = kite_starts();
+        let mut t = 0.0;
+        while t < KITE_SECONDS - 30.0 {
+            let song = starts.iter().filter(|&&s| s + 4.0 <= t).count() as u32 + 1;
+            frame(&mut fx, &mut fb, &mut a, t, song);
+            let playing = starts.iter().filter(|&&s| s + 4.0 <= t).count().saturating_sub(1);
+            if starts.iter().all(|&s| (t - s - 4.0).abs() > 6.0) {
+                assert_eq!(fx.act, playing, "at {t} s");
+            }
+            t += 1.0;
+        }
+        // a skip (Space) moves on at once, and the show still ends on the last song
+        let (mut fx, mut fb, mut a) = (Concert::new(7, Show::Kite), Fb::new(), Audio::new());
+        frame(&mut fx, &mut fb, &mut a, 2.0, 1);
+        frame(&mut fx, &mut fb, &mut a, 100.0, 2);
+        assert_eq!(fx.act, 1, "a new song well into an act is the next act");
+        frame(&mut fx, &mut fb, &mut a, KITE.finale_from + 1.0, 2);
+        assert_eq!(fx.act, 16);
+    }
+
+    #[test]
+    fn kite_captions_fit_and_use_letters_the_font_has() {
+        for i in 0..KITE_SONGS.len() {
+            let lines = dalhalla::song_caption(i);
+            assert_eq!(lines.len(), if [7, 16].contains(&i) { 2 } else { 1 }, "{lines:?}");
+            for s in &lines {
+                assert_eq!(font::clean(s, 60), *s, "{s} has letters the font cannot draw");
+                assert!(8 + font::text_width(s, 1, true) + 2 < WI, "{s} is too wide");
+            }
+        }
+        assert_eq!(dalhalla::song_caption(10)[0], "11/17 GLASSY EYES");
+        for s in ["TACK DALHALLA!", "GOD NATT", "LIVE AT DALHALLA", "KITE"] {
+            assert_eq!(font::clean(s, 40), s);
+        }
+    }
+
+    #[test]
+    fn every_kite_act_draws() {
+        let (mut fx, mut fb, mut a) = (Concert::new(8, Show::Kite), Fb::new(), Audio::new());
+        for (i, start) in kite_starts().into_iter().enumerate() {
+            for s in 0..40 {
+                frame(&mut fx, &mut fb, &mut a, start + 0.5 + s as f32 * 0.25, 0);
+            }
+            assert_eq!(fx.act, i);
+        }
+        // the goodbye, and a picture that is not all black
+        for s in 0..80 {
+            frame(&mut fx, &mut fb, &mut a, KITE_SECONDS - 17.0 + s as f32 * 0.2, 0);
+        }
+        assert!(fb.px.iter().any(|&p| p & 0x00FF_FFFF > 0x0040_4040));
     }
 
     #[test]

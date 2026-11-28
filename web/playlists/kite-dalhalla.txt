@@ -1,0 +1,43 @@
+# name: ufoscene.net · Kite at Dalhalla
+# description: The setlist for the Kite concert on ufoscene.net (press K, or open ufoscene.net/kite): Kite's homecoming show in the Dalhalla quarry, 2 September 2023, as on the record Live At Dalhalla (2026). 1:27:10.
+# album: Live At Dalhalla
+# One song per line: "Artist - Title", or a Spotify track link. Lines starting with # are comments.
+# The show (K) plays the album "Live At Dalhalla" in order on Spotify when it finds it, else these
+# songs one by one. Every new song starts the next act; without Spotify the acts follow the
+# record's own track lengths (kept in demo/src/fx/concert.rs, KITE_SONGS), so the show is as
+# long as the record.
+
+# 1. Remember Me, 8:30: dusk over the quarry, the lights come up
+Kite - Remember Me
+# 2. Changing, 3:25: lasers
+Kite - Changing
+# 3. True Colours, 5:57: the quarry walls in colour
+Kite - True Colours
+# 4. Bocelli, 5:08: searchlights into the sky
+Kite - Bocelli
+# 5. Hand Out The Drugs, 6:25: strobes
+Kite - Hand Out the Drugs
+# 6. Hills, 6:23: the walls in colour
+Kite - Hills
+# 7. Don't Take The Light Away, 5:48: one spot, phone lights
+Kite - Don't Take the Light Away
+# 8. Don't Dance, 4:00: from tape, the lights play on their own
+Kite - Don't Dance
+# 9. Dance Again, 5:55: lasers
+Kite - Dance Again
+# 10. Teenage Bliss, 3:32: searchlights
+Kite - Teenage Bliss
+# 11. Glassy Eyes, 3:04: eight red signal flares on the quarry wall
+Kite - Glassy Eyes
+# 12. I Can't Stand, 4:20: strobes
+Kite - I Can't Stand the Night
+# 13. If You Want Me, 5:35: the walls in colour
+Kite - If You Want Me
+# 14. Panic Music, 4:45: lasers
+Kite - Panic Music
+# 15. Jonny Boy, 3:55: searchlights
+Kite - Jonny Boy
+# 16. Nocturne, 6:13: fireworks over the quarry
+Kite - Nocturne
+# 17. Cannibal Holocaust, 4:07: from tape, the band says goodbye
+Kite - Cannibal Holocaust

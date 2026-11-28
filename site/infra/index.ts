@@ -228,6 +228,15 @@ const callbackRewrite = new aws.cloudfront.Function("callback-rewrite", {
   if (request.uri === '/callback' || request.uri === '/callback/') {
     request.uri = '/index.html';
   }
+  // a show's own address is the page too, which starts the show; with a slash the page would
+  // look for its files one folder down, so that one moves to the address without it
+  var show = request.uri.toLowerCase().match(/^\\/(kite|queen|concert|ukraine)(\\/?)$/);
+  if (show && show[2]) {
+    return { statusCode: 301, statusDescription: 'Moved Permanently', headers: { location: { value: '/' + show[1] } } };
+  }
+  if (show) {
+    request.uri = '/index.html';
+  }
   return request;
 }
 `,

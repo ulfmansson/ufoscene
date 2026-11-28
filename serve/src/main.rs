@@ -25,6 +25,9 @@ fn content_type(path: &str) -> &'static str {
     }
 }
 
+/// Addresses that are the page itself: Spotify's way back, and the shows' own addresses.
+const PAGES: [&str; 5] = ["/callback", "/kite", "/queen", "/concert", "/ukraine"];
+
 fn respond(s: &mut TcpStream, status: &str, ctype: &str, body: &[u8], head_only: bool) -> std::io::Result<()> {
     write!(
         s,
@@ -51,8 +54,16 @@ fn handle(mut s: TcpStream, root: &Path) -> std::io::Result<()> {
     let method = parts.next().unwrap_or("");
     let target = parts.next().unwrap_or("/");
     let path = target.split(['?', '#']).next().unwrap_or("/");
-    // `/callback` is where Spotify sends the browser back after login: it is the page itself
-    let rel = if path == "/" || path == "/callback" { "index.html" } else { path.trim_start_matches('/') };
+    // `/callback` is where Spotify sends the browser back after login, and a show's own address
+    // (`/kite`, `/queen`, `/concert`, `/ukraine`) starts that show: all are the page itself
+    let page = path.len() > 1 && PAGES.contains(&path.trim_end_matches('/').to_ascii_lowercase().as_str());
+    if page && path.ends_with('/') && path != "/callback/" {
+        // with the slash the page would look for its files one folder down
+        let to = path.trim_end_matches('/');
+        write!(s, "HTTP/1.1 301 Moved Permanently\r\nLocation: {to}\r\nContent-Length: 0\r\nConnection: close\r\n\r\n")?;
+        return s.flush();
+    }
+    let rel = if path == "/" || page { "index.html" } else { path.trim_start_matches('/') };
 
     if method != "GET" && method != "HEAD" {
         return respond(&mut s, "405 Method Not Allowed", "text/plain", b"method not allowed", false);
