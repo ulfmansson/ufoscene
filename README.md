@@ -182,6 +182,15 @@ fireworks and confetti, before the band takes a bow. With song names (Spotify, L
 radio) every new song starts the next act, and the artist's photo shows on the LED wall;
 without them the acts change every few minutes. **N** skips to the next act.
 
+The show is filmed like a concert broadcast: the camera cuts on the beat between the singer,
+the guitarist, the drums, the LED wall and the crowd, flies over the stage between shots
+(push-ins, pull-outs, a crane down from the lights, a swoop in over the crowd), tilts now and
+then and sways a little like a hand-held camera. Every act opens on the wide shot and the bow
+ends on it; the show clock stays put.
+
+Switching to a playlist ends the show and brings the demos back: one picked in the panel, or
+one started in the Spotify app while the setlist plays.
+
 With Spotify connected (Premium), the concert starts its setlist on your Spotify app, in order:
 [`web/playlists/concert.txt`](web/playlists/concert.txt), Queen's greatest hits in about 29
 minutes. Swap in any band: one `Artist - Title` per line, and keep it just under 30 minutes so

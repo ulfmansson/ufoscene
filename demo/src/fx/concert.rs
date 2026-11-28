@@ -28,12 +28,20 @@
 //! from dusk to night, and one act per song, among them the eight red signal flares lit on
 //! the rock face before Glassy Eyes.
 //!
+//! The three shows on the rock stage are filmed rather than shown from one seat: the stage
+//! is drawn whole and a camera crew (`camera`) cuts between the band, the LED wall and the
+//! crowd on the beat, flies over the stage between shots and sways a little like a hand-held
+//! camera. Kite's quarry is shown whole, as it was.
+//!
 //! Like the Christmas scene none of them is in `all()`, so the 100 demos stay as they are.
+
+mod camera;
 
 use std::f32::consts::TAU;
 
 use super::*;
 use crate::font;
+use camera::{Camera, Cue, Spots};
 
 mod dalhalla;
 
@@ -347,6 +355,9 @@ pub struct Concert {
     /// Yellow to white, for the Ukraine show's dancing letters over the blue.
     gold: Palette,
     rng: Rng,
+    /// The whole stage, drawn every frame for the camera to film.
+    stage: Fb,
+    cam: Camera,
 }
 
 impl Concert {
@@ -363,7 +374,7 @@ impl Concert {
         }
         let dots = (0..70).map(|_| (rng.f(), 6.0 + rng.f() * 200.0, rng.f())).collect();
         let gold = Palette::cosine([0.95, 0.85, 0.45], [0.05, 0.15, 0.4], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0]);
-        Concert { show, act: 0, act_t0: 0.0, song: None, skips: None, by_song: false, fans, bits: Vec::new(), flames: [0.0; 4], dots, gold, rng }
+        Concert { show, act: 0, act_t0: 0.0, song: None, skips: None, by_song: false, fans, bits: Vec::new(), flames: [0.0; 4], dots, gold, rng, stage: Fb::new(), cam: Camera::new(seed) }
     }
 
     fn next_act(&mut self, t: f32) {
@@ -997,14 +1008,11 @@ impl Concert {
     }
 }
 
-impl Effect for Concert {
-    fn draw(&mut self, fb: &mut Fb, c: &Ctx) {
+impl Concert {
+    /// The whole stage this frame, the band and the crowd; returns where the band is, for
+    /// the camera.
+    fn scene(&mut self, fb: &mut Fb, c: &Ctx) -> Spots {
         let (t, a, dt) = (c.t, c.a, c.dt);
-        self.follow(t, c.song, c.skips);
-        if self.show == Show::Kite {
-            // a stage of its own: the quarry at Dalhalla
-            return self.dalhalla(fb, c);
-        }
         let plan = self.show.plan();
         let ukraine = self.show == Show::Ukraine;
         let act = (t >= DOORS).then(|| plan.acts[self.act]);
@@ -1048,11 +1056,13 @@ impl Effect for Concert {
         if act.is_some() && (goodbye || (t - DOORS).rem_euclid(NOTE_EVERY) < NOTE_FOR) {
             self.note(fb, c);
         }
+        let mut ufo = None;
         if self.show == Show::Secret && act.is_some() {
             // the UFO came to see the show: it drifts over the stage, lights on the beat
             let cx = 192.0 + 150.0 * (t * 0.21).sin();
             let cy = 26.0 + 4.0 * (t * 1.3).sin() - 8.0 * a.pulse;
             crate::eggs::saucer(fb, cx as i32, cy as i32, t, a, c.pal);
+            ufo = Some((cx, cy));
         }
         let tree = act == Some(Act::Tree) && !goodbye;
         if tree {
@@ -1383,6 +1393,17 @@ impl Effect for Concert {
         } else if act.is_some() && age < 0.25 && t > DOORS + 1.0 {
             fb.flash((0.25 - age) * 2.0);
         }
+        let singer_feet = if ballad { 136.0 } else { 139.0 };
+        Spots { singer: (fx, singer_feet), guitar: (gx, g_feet), bass: (266.0, 133.0), ufo }
+    }
+
+    /// What stays put whatever the camera does: the bow's thank-you, the Ukraine show's
+    /// captions and the show clock.
+    fn overlays(&self, fb: &mut Fb, c: &Ctx, act: Option<Act>, goodbye: bool) {
+        let (t, a) = (c.t, c.a);
+        let plan = self.show.plan();
+        let ukraine = self.show == Show::Ukraine;
+        let age = t - self.act_t0;
         if goodbye {
             // "thank you" in Ukrainian (the font has no Cyrillic), then in English
             let (big, small) = if ukraine { ("DYAKUYU!", "THANK YOU!") } else { ("THANK YOU!", "GOOD NIGHT") };
@@ -1399,6 +1420,39 @@ impl Effect for Concert {
         }
 
         show_clock(fb, t, plan.length);
+    }
+}
+
+impl Effect for Concert {
+    fn draw(&mut self, fb: &mut Fb, c: &Ctx) {
+        self.follow(c.t, c.song, c.skips);
+        if self.show == Show::Kite {
+            // a stage of its own: the quarry at Dalhalla, not filmed by the camera
+            return self.dalhalla(fb, c);
+        }
+        // the stage goes into a frame of its own, then the camera films it into `fb`
+        let mut stage = std::mem::replace(&mut self.stage, Fb { px: Vec::new() });
+        let spots = self.scene(&mut stage, c);
+        let t = c.t;
+        let plan = self.show.plan();
+        let act = (t >= DOORS).then(|| plan.acts[self.act]);
+        let goodbye = t > plan.length - GOODBYE;
+        let cue = Cue {
+            t,
+            beat: c.a.beat,
+            period: c.a.period,
+            pulse: c.a.pulse,
+            act,
+            act_key: (self.act, self.act_t0),
+            goodbye,
+            note: !c.text.is_empty() && act.is_some() && !goodbye && (t - DOORS).rem_euclid(NOTE_EVERY) < NOTE_FOR,
+            loud: !matches!(act, None | Some(Act::Ballad | Act::Solo | Act::Tree)) && !goodbye,
+            secret: self.show == Show::Secret,
+        };
+        let view = self.cam.direct(&cue, &spots);
+        camera::film(&stage, fb, view);
+        self.stage = stage;
+        self.overlays(fb, c, act, goodbye);
     }
 }
 
