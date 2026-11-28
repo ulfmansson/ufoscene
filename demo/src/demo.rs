@@ -105,6 +105,9 @@ pub struct Demo {
     track_t: f32,
     /// One line the page adds to the end of every scroll text (`set_scroll_extra`).
     scroll_extra: String,
+    /// The dedication on the concert stage's LED wall (`set_concert_note`), handed to the
+    /// concert as `Ctx::text`; concerts have no scroll text of their own.
+    concert_note: String,
     list: Vec<u8>,
     qr: Option<crate::qr::Qr>,
     qr_since: Option<f32>,
@@ -187,6 +190,7 @@ impl Demo {
             track: None,
             track_t: -100.0,
             scroll_extra: String::new(),
+            concert_note: String::new(),
             list,
             qr: crate::qr::encode(SITE_URL.as_bytes()),
             qr_since: None,
@@ -363,6 +367,13 @@ impl Demo {
         self.scroll = Scroller::new(&self.scroll_text());
     }
 
+    /// The page wrote one UTF-8 line into `text_buf` for the concert stage's LED wall (the
+    /// secret show's dedication); an empty line removes it.
+    pub fn set_concert_note(&mut self, len: usize) {
+        let s = String::from_utf8_lossy(&self.text_buf[..len.min(TEXT_BUF)]).to_string();
+        self.concert_note = font::clean(s.trim(), 60);
+    }
+
     fn scroll_text(&self) -> String {
         let text = &self.recipes[self.demo].text;
         if self.scroll_extra.is_empty() { text.clone() } else { format!("{text}     {}", self.scroll_extra) }
@@ -420,7 +431,7 @@ impl Demo {
             beats: self.audio.beats.wrapping_sub(self.part_beat0),
             phase: self.audio.phase(t),
             name: r.name,
-            text: &r.text,
+            text: if self.in_concert { &self.concert_note } else { &r.text },
             image: self.image.as_ref(),
             song: self.songs,
             skips: self.skips,
@@ -728,6 +739,28 @@ mod tests {
         assert_eq!(d.state().0, 7, "then the demo that was on starts again");
         assert_ne!(d.state().2, "LIVE CONCERT");
         assert!(d.recipes.iter().all(|r| r.parts.iter().all(|p| d.defs[p.0].name != "LIVE CONCERT")), "never inside a demo");
+    }
+
+    #[test]
+    fn the_secret_show_plays_eight_minutes_with_its_dedication() {
+        let mut d = Demo::new();
+        let mut t = 10.0;
+        d.set_demo(5);
+        let note = "abc: slava ukraini! ♥";
+        d.text_buf[..note.len()].copy_from_slice(note.as_bytes());
+        d.set_concert_note(note.len());
+        assert_eq!(d.concert_note, "ABC: SLAVA UKRAINI!", "what the font cannot draw goes");
+        d.concert(2);
+        run(&mut d, &mut t, 1.0);
+        assert_eq!(d.state().2, "SECRET SHOW");
+        t += 470.0;
+        run(&mut d, &mut t, 1.0);
+        assert!(d.concert_left() > 0.0 && d.concert_left() < 15.0, "{} s left", d.concert_left());
+        run(&mut d, &mut t, 15.0);
+        assert_eq!(d.concert_left(), 0.0);
+        assert_eq!(d.state().0, 5);
+        d.set_concert_note(0);
+        assert_eq!(d.concert_note, "");
     }
 
     #[test]

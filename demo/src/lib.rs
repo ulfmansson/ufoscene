@@ -76,8 +76,8 @@ pub extern "C" fn ufo_christmas(d: *mut Demo) {
     unsafe { (*d).christmas_first() }
 }
 
-/// Start a concert (0: the half-hour rock concert, 1: the ten-minute Ukraine show); the
-/// demos carry on when it is over.
+/// Start a concert (0: the half-hour rock concert, 1: the ten-minute Ukraine show, 2: the
+/// eight-minute secret show); the demos carry on when it is over.
 #[unsafe(no_mangle)]
 pub extern "C" fn ufo_concert(d: *mut Demo, show: u32) {
     unsafe { (*d).concert(show as usize) }
@@ -162,6 +162,13 @@ pub extern "C" fn ufo_text_buf(d: *mut Demo) -> *mut u8 {
 #[unsafe(no_mangle)]
 pub extern "C" fn ufo_set_track(d: *mut Demo, len: u32) {
     unsafe { (*d).set_track(len as usize) }
+}
+
+/// One UTF-8 line in `ufo_text_buf` for the concert stage's LED wall (the secret show's
+/// dedication); length 0 removes it. Set it before `ufo_concert`.
+#[unsafe(no_mangle)]
+pub extern "C" fn ufo_set_concert_note(d: *mut Demo, len: u32) {
+    unsafe { (*d).set_concert_note(len as usize) }
 }
 
 /// One UTF-8 line in `ufo_text_buf` to add to the end of every scroll text; length 0 removes it.
