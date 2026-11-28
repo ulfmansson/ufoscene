@@ -324,7 +324,32 @@ const SHOWS = {
 let secretOpen = false; // a right secret link, or a public concert, opened it on this page
 let showNote = ''; // the dedication for the next show's LED wall
 let currentShow = null;
+// what Spotify played from when the show's songs began (see showFollowsSpotify): undefined
+// until the first song of the show is seen
+let showContext;
 const inConcert = () => ex.ufo_concert_left(demo) > 0;
+
+/** End the show that is on and carry on with the demos. */
+function endShow(why) {
+  if (!inConcert()) return;
+  ex.ufo_set_demo(demo, ex.ufo_current_demo(demo));
+  say(`${SHOWS[currentShow]?.name || 'The show'} over: ${why}`, 4000);
+}
+
+/**
+ * During a show, a playlist the listener switches to in Spotify ends it: the setlist plays
+ * as single songs (no playlist), so a playlist that was not on when the show began means
+ * someone picked other music. Other changes (the setlist starting) just move the baseline.
+ */
+function showFollowsSpotify(context) {
+  if (!inConcert()) return;
+  const uri = context?.uri ?? null;
+  if (showContext !== undefined && uri !== showContext && context?.type === 'playlist') {
+    endShow('a playlist is on, back to the demos');
+    return;
+  }
+  showContext = uri;
+}
 
 async function playSetlist(show) {
   const { setlist, key, name } = SHOWS[show];
@@ -354,6 +379,7 @@ async function playSetlist(show) {
 
 function beginShow(show) {
   currentShow = show;
+  showContext = undefined;
   if (ex.ufo_set_concert_note) {
     const bytes = new TextEncoder().encode(show === 'secret' ? showNote : '').slice(0, 1024);
     new Uint8Array(mem(), ex.ufo_text_buf(demo), 1024).set(bytes);
@@ -374,8 +400,7 @@ function beginShow(show) {
 function concert(show = 'rock') {
   if (!SHOWS[show] || (show === 'secret' && !secretOpen)) return;
   if (inConcert() && currentShow === show) {
-    ex.ufo_set_demo(demo, ex.ufo_current_demo(demo));
-    say(`${SHOWS[show].name} over: back to the demos`, 3000);
+    endShow('back to the demos');
     return;
   }
   // from the panel: Start closes it and begins the show, without its usual radio
@@ -732,6 +757,7 @@ function startWatching() {
       const { artistImage: a, albumImage: c } = song;
       const first = a ? { url: a, credit: a === c ? 'COVER: SPOTIFY' : 'IMAGE: SPOTIFY' } : null;
       const album = c ? { url: c, credit: 'COVER: SPOTIFY' } : null;
+      showFollowsSpotify(song.context);
       await songStarted(song.artist, song.title, song.mainArtist, first, album);
     },
     (e) => {
@@ -786,7 +812,17 @@ guide = createGuide({
 });
 startLastfm();
 guide.init();
-refreshPlaylists = initPlaylists({ spotify, say, container: $('playlists'), onStart: () => start() });
+// a playlist started from here ends a show that is on: the playlist brings the demos back
+const playlistStarts = () => endShow('a playlist is on, back to the demos');
+refreshPlaylists = initPlaylists({
+  spotify,
+  say,
+  container: $('playlists'),
+  onStart: () => {
+    playlistStarts();
+    start();
+  },
+});
 
 async function playlistFrom(text, fallbackName) {
   if (!spotify.connected()) {
@@ -811,6 +847,7 @@ async function playlistFrom(text, fallbackName) {
     head.querySelector('a').href = pl.url || '#';
     head.querySelector('button').onclick = async () => {
       try {
+        playlistStarts();
         await spotify.play(pl.uri);
         say('Playing — set Sound output to BlackHole if you have not already.');
       } catch (e) {

@@ -129,8 +129,10 @@ function pick(images, min = 256) {
 }
 
 /**
- * Poll what is playing. Calls `onTrack({ artist, title, artistImage, albumImage })`
- * when the song changes. Returns a stop function.
+ * Poll what is playing. Calls `onTrack({ artist, title, artistImage, albumImage, context })`
+ * when the song changes; `context` is what it plays from (`{ type: 'playlist', uri }`, or an
+ * album, an artist…), null for songs started one by one (a concert's setlist).
+ * Returns a stop function.
  */
 export function watch(onTrack, onError, every = 5000) {
   let last = null;
@@ -159,6 +161,7 @@ export function watch(onTrack, onError, every = 5000) {
           title: item.name,
           artistImage: artistImage || albumImage,
           albumImage,
+          context: now.context?.uri ? { type: now.context.type, uri: now.context.uri } : null,
         });
       }
     } catch (e) {
