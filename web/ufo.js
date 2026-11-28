@@ -283,8 +283,8 @@ function start() {
   // from 23 to 28 December, the first start of the evening opens with the Christmas scene
   if (!christmasShown && christmasWeek(new Date())) ex.ufo_christmas(demo);
   christmasShown = true;
-  if (showOnStart) {
-    const show = showOnStart;
+  const show = showOnStart;
+  if (show) {
     showOnStart = null;
     beginShow(show);
   }
@@ -292,7 +292,9 @@ function start() {
   document.body.classList.add('running');
   setPaused(false);
   scheduleHint(12000);
-  startAudio();
+  // a show brings its own music (its setlist on Spotify, or what the visitor puts on): the
+  // tab's radio would play over it and its station messages would hide the show's
+  if (!(show && (audioKind() || 'radio') === 'radio')) startAudio();
 }
 function togglePanel() {
   const show = panel.style.display === 'none';
@@ -308,7 +310,7 @@ $('go').addEventListener('click', start);
 
 // Shows on a pixel stage (demo/src/fx/concert.rs), then the demos carry on:
 // C: half an hour of rock concert (the setlist in playlists/concert.txt).
-// E: ten minutes of Ukraine's three Eurovision winners (playlists/ukraine.txt).
+// U: ten minutes of Ukraine's three Eurovision winners (playlists/ukraine.txt).
 // Also the panel's buttons, #concert / #ukraine in the address, or ufo.concert('ukraine').
 // The third, the secret show, has no key: a donor's secret link or a booked public concert
 // opens it (concerts.js), with a dedication on the LED wall.
@@ -316,7 +318,7 @@ $('go').addEventListener('click', start);
 // and every new song brings the next act. The same key again ends the show.
 const SHOWS = {
   rock: { id: 0, setlist: 'playlists/concert.txt', key: 'C', name: 'Concert' },
-  ukraine: { id: 1, setlist: 'playlists/ukraine.txt', key: 'E', name: 'Ukraine at Eurovision' },
+  ukraine: { id: 1, setlist: 'playlists/ukraine.txt', key: 'U', name: 'Ukraine at Eurovision' },
   secret: { id: 2, setlist: null, key: '', name: 'Secret show' },
 };
 let secretOpen = false; // a right secret link, or a public concert, opened it on this page
@@ -345,6 +347,7 @@ async function playSetlist(show) {
   } catch (e) {
     if (e.status === 404) say(`Open the Spotify app (or open.spotify.com) and play anything once, then press ${key} twice.`, 9000);
     else if (e.status === 403) say('Starting songs from here needs Spotify Premium. Start the music in Spotify yourself.', 9000);
+    else if (e.status === 409) say(`The setlist is loaded in ${e.device || 'Spotify'}, but Spotify did not start it. Press play there once.`, 10000);
     else say(`Could not start the setlist (${e.message}).`, 8000);
   }
 }
@@ -357,6 +360,13 @@ function beginShow(show) {
     ex.ufo_set_concert_note(demo, bytes.length);
   }
   ex.ufo_concert(demo, SHOWS[show].id);
+  // a show with a setlist brings its own music: stop the tab's radio, which would play over it,
+  // and the song the panel paused must not come back on over the setlist (start() resumes it).
+  // The secret show has no setlist, so whatever plays keeps playing.
+  if (SHOWS[show].setlist) {
+    if (activeKind === 'radio') stopSource();
+    if (spotify.connected()) spotifyPausedByUs = false;
+  }
   playSetlist(show);
 }
 
@@ -368,8 +378,13 @@ function concert(show = 'rock') {
     say(`${SHOWS[show].name} over: back to the demos`, 3000);
     return;
   }
+  // from the panel: Start closes it and begins the show, without its usual radio
+  if (panel.style.display !== 'none') {
+    showOnStart = show;
+    start();
+    return;
+  }
   showOnStart = null; // started here, so Start must not start it again
-  if (panel.style.display !== 'none') start();
   beginShow(show);
 }
 window.ufo.concert = concert;
@@ -576,7 +591,7 @@ window.addEventListener('keydown', (e) => {
   else if (k === 'h') ex.ufo_toggle_hud(demo);
   else if (k === 'q') ex.ufo_show_qr(demo);
   else if (k === 'c') concert('rock');
-  else if (k === 'e') concert('ukraine');
+  else if (k === 'u') concert('ukraine'); // U-F-O also starts the flyby egg
   else if (k === 't') {
     setTv(!tvmode.checked);
     say(tvmode.checked ? 'TV mode on: steady 30 fps, no scanlines' : 'TV mode off: 60 fps with scanlines', 2500);

@@ -152,6 +152,34 @@ fn wall_lines(note: &str) -> Vec<String> {
 const BLUE: u32 = 0xFFBB_5B00;
 const YELLOW: u32 = 0xFF00_D5FF;
 
+/// Who won Eurovision for Ukraine with each act's song: artist, song, year, points. All
+/// three came first. Shown beside the LED wall while the act plays.
+fn winner(act: Act) -> Option<(&'static str, &'static str, &'static str, &'static str)> {
+    match act {
+        Act::WildDances => Some(("RUSLANA", "WILD DANCES", "2004", "280 POINTS")),
+        Act::Tree => Some(("JAMALA", "1944", "2016", "534 POINTS")),
+        Act::Stefania => Some(("KALUSH ORCHESTRA", "STEFANIA", "2022", "631 POINTS")),
+        _ => None,
+    }
+}
+
+/// The width of a caption column beside the LED wall, between it and a speaker stack.
+const CAPTION_W: i32 = 72;
+
+/// The lines of a caption column: (text, bold, colour). Long names go one word a line.
+fn winner_lines(act: Act) -> [Vec<(&'static str, bool, u32)>; 2] {
+    let Some((artist, song, year, points)) = winner(act) else { return [vec![], vec![]] };
+    let white = rgb(255, 255, 255);
+    let mut who: Vec<_> = if font::text_width(artist, 1, true) <= CAPTION_W {
+        vec![(artist, true, YELLOW)]
+    } else {
+        artist.split(' ').map(|w| (w, true, YELLOW)).collect()
+    };
+    who.push((song, false, white));
+    let how = vec![("1ST PLACE", true, YELLOW), ("EUROVISION", false, white), (year, false, white), (points, false, white)];
+    [who, how]
+}
+
 // The stage, top to bottom.
 const TRUSS_Y: i32 = 3;
 const CANS: usize = 8;
@@ -814,6 +842,26 @@ impl Concert {
             font::text(fb, line, sx + (sw - w) / 2, sy + 38, 2, true, rgb(255, 255, 255));
         }
     }
+
+    /// The Ukraine show, beside the LED wall: who is on (left) and how they did at
+    /// Eurovision (right), fading in as the act starts.
+    fn winner_captions(&self, fb: &mut Fb, act: Act, age: f32) {
+        let (sx, sy, sw, _) = SCREEN;
+        let k = smoothstep(age / 1.5);
+        let [who, how] = winner_lines(act);
+        for (col, lines) in [(0, who), (1, how)] {
+            for (i, (s, bold, c)) in lines.into_iter().enumerate() {
+                let w = font::text_width(s, 1, bold);
+                // the left column hugs the wall from the left, the right one from the right
+                let x = if col == 0 { sx - 6 - w } else { sx + sw + 6 };
+                let y = sy + 3 + i as i32 * 10;
+                for row in y - 2..y + font::GH + 1 {
+                    fb.hspan_blend(x - 2, x + w + 2, row, rgb(0, 0, 0), 0.55 * k);
+                }
+                font::text(fb, s, x, y, 1, bold, scale(c, k));
+            }
+        }
+    }
 }
 
 impl Effect for Concert {
@@ -1204,6 +1252,11 @@ impl Effect for Concert {
             font::text(fb, small, (WI - w) / 2, 46, 2, true, rgb(255, 255, 255));
         }
 
+        // the Ukraine show: who is on and how they did at Eurovision
+        if let (true, false, Some(act)) = (ukraine, goodbye, act) {
+            self.winner_captions(fb, act, age);
+        }
+
         // the show clock
         let left = t.clamp(0.0, plan.length) as u32;
         let clock = format!("LIVE {:02}:{:02} / {:02}:00", left / 60, left % 60, plan.length as u32 / 60);
@@ -1329,5 +1382,26 @@ mod tests {
         assert_eq!(UKRAINE.acts[fx.act], Act::Stefania, "Stefania plays to its end");
         frame(&mut fx, &mut fb, &mut a, UKRAINE.finale_from + 1.0, 3);
         assert_eq!(UKRAINE.acts[fx.act], Act::Finale);
+    }
+
+    #[test]
+    fn each_winner_is_named_with_its_eurovision_placement_beside_the_wall() {
+        let (sx, sy, sw, _) = SCREEN;
+        for &act in &UKRAINE.acts[..3] {
+            let [who, how] = winner_lines(act);
+            assert!(who.len() >= 2 && how.len() == 4, "{act:?}");
+            assert_eq!(how[0].0, "1ST PLACE");
+            for (s, bold, _) in who.iter().chain(&how) {
+                assert!(font::text_width(s, 1, *bold) <= CAPTION_W, "{s} is too wide");
+                assert_eq!(font::clean(s, 40), *s, "{s} has letters the font cannot draw");
+            }
+            // both columns clear the speaker stacks (x 4..40 and 344..380) and their tops (y 60)
+            let widest = |lines: &[(&str, bool, u32)]| lines.iter().map(|(s, b, _)| font::text_width(s, 1, *b)).max().unwrap();
+            assert!(sx - 6 - widest(&who) - 2 > 40 && sx + sw + 6 + widest(&how) + 2 < 344);
+            assert!(sy + 3 + who.len().max(how.len()) as i32 * 10 < 60);
+        }
+        assert_eq!(winner(Act::WildDances).map(|w| w.0), Some("RUSLANA"));
+        assert_eq!(winner(Act::Stefania).map(|w| w.2), Some("2022"));
+        assert!(winner(Act::Finale).is_none() && winner(Act::Clap).is_none());
     }
 }
