@@ -18,6 +18,21 @@ The analyser gives **the same bytes as Chromium's** `getByteFrequencyData` (Blac
 smoothing 0.55, -100..-30 dB), so the demos react to the music the same way. A test compares
 the two (`analyser::compare`).
 
+## On a ufoscene Pi
+
+Every ufoscene-pi image and release since v0.2.0 carries the player for both Pi families (its CI
+runs `native/build-pi.sh all`); the browser kiosk stays the default. Over SSH:
+
+```bash
+sudo /opt/ufoscene/player.sh native
+```
+
+```bash
+sudo /opt/ufoscene/player.sh browser
+```
+
+The choice is kept in `/etc/ufoscene/player`, so the nightly update keeps it.
+
 ## Build (on the Mac)
 
 ```bash
@@ -33,7 +48,7 @@ This makes static binaries for both Pi families in `target/pi-native/`, linked w
 | `ufo-native-arm64` | 3, 4, 400, 5, 500, Zero 2 W with 64-bit Raspberry Pi OS |
 | `ufo-native-armhf` | 2, and any Pi with 32-bit Raspberry Pi OS |
 
-## Try it on a ufoscene Pi
+## Try a build of your own on a ufoscene Pi
 
 ```bash
 scp -r /Users/ulf.mansson/IdeaProjects/ufoscene/target/pi-native <user>@ufoscene.local:
@@ -60,8 +75,9 @@ sudo ./pi-native/try-native.sh off
   browser kiosk and starts the player. Log: `journalctl -u ufoscene-native -f`.
 * `off` brings the browser kiosk back.
 
-A nightly ufoscene-pi update starts the browser kiosk again (the unit conflicts with it). To go
-back to the player, run `on` once more.
+`try-native.sh` installs outside the release, so a nightly ufoscene-pi update starts the
+player the release brings (the kiosk, unless `player.sh native` was chosen). To try your own build
+again, run `on` once more.
 
 ## Options
 
@@ -98,9 +114,7 @@ ufo-native [--card /dev/dri/cardN] [--mode WxH[@Hz]] [--server HOST:PORT | --no-
 * **Artist photos** (Wikimedia Commons, covers): they would need HTTPS and a JPEG decoder.
 * **The radio's decade and genre choice** from radio-browser.info: the player rotates through
   the stations in `radio.rs` (those that send the song now playing).
-* **The nightly updater** does not know the player. To ship it in the image, ufoscene-pi's
-  `make_bundle.sh` would add the two binaries, and `install.sh` would install them with the unit
-  and `mpv`, and enable the kiosk or the player by a setting.
+* **A switch on the remote** between the kiosk and the player: for now `player.sh` over SSH.
 
 ## Files
 
